@@ -29,30 +29,30 @@ async def gerar_compra():
             "dateTime": fake.iso8601()
         }]
 
-@app.get("/gerar_compras/{numero_registro}")
-async def gerar_compra(numero_registro: int):
+# @app.get("/gerar_compras/{numero_registro}")
+# async def gerar_compra(numero_registro: int):
     
-    if numero_registro < 1:
-        return {"error" : "O número deve ser maior que 1"}
+#     if numero_registro < 1:
+#         return {"error" : "O número deve ser maior que 1"}
     
-    respostas = []
+#     respostas = []
 
  
 
-    for _ in range(numero_registro):
-        index = random.randint(1, len(df)-1)
-        tuple = df.iloc[index]
-        compra = {
-                "client": fake.name(),
-                "creditcard": fake.credit_card_provider(),
-                "product": tuple["Product Name"],
-                "ean": int(tuple["EAN"]),
-                "price":  round(float(tuple["Price"])*1.2,2),
-                # "price":  "hoje é de graça",
-                "clientPosition": fake.location_on_land(),
-                "store": lojapadraoonline,
-                "dateTime": fake.iso8601()
-                }
-        respostas.append(compra)
+#     for _ in range(numero_registro):
+#         index = random.randint(1, len(df)-1)
+#         tuple = df.iloc[index]
+#         compra = {
+#                 "client": fake.name(),
+#                 "creditcard": fake.credit_card_provider(),
+#                 "product": tuple["Product Name"],
+#                 "ean": int(tuple["EAN"]),
+#                 "price":  round(float(tuple["Price"])*1.2,2),
+#                 # "price":  "hoje é de graça",
+#                 "clientPosition": fake.location_on_land(),
+#                 "store": lojapadraoonline,
+#                 "dateTime": fake.iso8601()
+#                 }
+#         respostas.append(compra)
         
-    return respostas
+#     return respostas

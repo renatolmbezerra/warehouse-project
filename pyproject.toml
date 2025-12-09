@@ -8,4 +8,5 @@ dependencies = [
     "faker>=38.2.0",
     "fastapi>=0.123.10",
     "pandas>=2.3.3",
+    "uvicorn[standard]>=0.38.0",
 ]
