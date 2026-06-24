@@ -45,4 +45,4 @@ class S3Client:
             print(f"Erro ao baixar o arquivo {s3_key}: {e}")
             
     def list_object(self, prefix):
-        return self.s3.list_objects(Buckect=self._envs['s3_bucket'], Prefix=prefix)['Contents']
+        return self.s3.list_objects(Bucket=self._envs['s3_bucket'], Prefix=prefix)['Contents']
