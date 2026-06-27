@@ -3,8 +3,9 @@ import pandas as pd
 import pyarrow.parquet as pq
 import datetime
 from io import BytesIO
-from contracts.schema import GenericSchema, CompraShema
-from typing import List
+from pydantic import ValidationError
+# from contracts.schema import GenericSchema, CompraShema
+# from typing import List
 
 
 class APICollector:
@@ -12,18 +13,23 @@ class APICollector:
         self._schema = schema
         self._aws = aws
         self._buffer = None
-        return
 
     def start(self, param):
         response = self.getData(param)
-        response = self.extractData(response)
-        response = self.transformDF(response)
-        response = self.convertToParquet(response)
+        extracted = self.extractData(response)
 
-        if self._buffer is not None:
+        # Se não houver dados válidos, aborta para não gerar parquet vazio
+        if not extracted:
+            print("Nenhum dado válido para processar.")
+            return False
+        
+        df = self.transformDF(extracted)
+        parquet_buffer = self.convertToParquet(df)
+
+        if parquet_buffer is not None:
             file_name = self.fileName()
-            print(file_name)
-            self._aws.upload_file(response, file_name)
+            print(f"Salvando arquivo: {file_name}")
+            self._aws.upload_file(parquet_buffer, file_name)
             return True
 
         return False
@@ -31,38 +37,41 @@ class APICollector:
     def getData(self, param):
         response = None
         if param > 1:
-            response = requests.get(
-                f"http://127.0.0.1:8000/gerar_compras/{param}"
-            ).json()
+            response = requests.get(f"http://127.0.0.1:8000/gerar_compras/{param}").json()
         else:
             response = requests.get(f"http://127.0.0.1:8000/gerar_compra").json()
         return response
 
     def extractData(self, response):
-        result: List[GenericSchema] = []
+        result = []
+
+        if isinstance(response, dict):
+            response = [response]
+
         for item in response:
-            index = {}
-            for key, value in self._schema.items():
-                if type(item.get(key)) == value:
-                    index[key] = item[key]
-                else:
-                    index[key] = None
-            result.append(index)
+            try:
+                # O Pydantic valida o dicionário aqui
+                validated_item = self._schema(**item)
+                # .model_dump() converte o objeto Pydantic de volta para dicionário
+                result.append(validated_item.model_dump())
+            except ValidationError as e:
+                print(f"Erro de validação no item {item}:")
+                print(e.errors())
         return result
 
     def transformDF(self, response):
         result = pd.DataFrame(response)
         return result
 
-    def convertToParquet(self, response):
+    def convertToParquet(self, df):
         self._buffer = BytesIO()
         try:
-            response.to_parquet(self._buffer)
+            df.to_parquet(self._buffer)
+            self._buffer.seek(0) # Retorna o ponteiro do buffer para o início
             return self._buffer
-        except:
-            print("Erro ao transformar o DF em parquet")
+        except Exception as e:
+            print(f"Erro ao transformar o DF em parquet: {e} ")
             return None
-
 
     def fileName(self):
         data_atual = datetime.datetime.now().isoformat() 

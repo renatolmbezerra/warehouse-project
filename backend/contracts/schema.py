@@ -1,12 +1,9 @@
-from typing import Union, Dict
+from pydantic import BaseModel, PositiveFloat
+from datetime import datetime
 
 
-GenericSchema = Dict[str, Union[str, float, int]]
-
-
-CompraShema: GenericSchema = {
-    "ean" : int,
-    "price" : float,
-    "store" : int,
-    "dateTime" : str
-}
+class CompraSchema(BaseModel):
+    ean: int
+    price: PositiveFloat
+    store: int
+    dateTime: datetime
