@@ -35,12 +35,24 @@ class APICollector:
         return False
 
     def getData(self, param):
-        response = None
         if param > 1:
-            response = requests.get(f"http://127.0.0.1:8000/gerar_compras/{param}").json()
+            url = f"http://127.0.0.1:8000/gerar_compras/{param}"
         else:
-            response = requests.get(f"http://127.0.0.1:8000/gerar_compra").json()
-        return response
+            url = f"http://127.0.0.1:8000/gerar_compra"
+
+        try:
+            response = requests.get(url)
+            if response.status_code == 200:
+                return response.json()
+            else:
+                print(f"Erro na API! Status: {response.status_code} | Resposta: {response.text}")
+                return []
+        except requests.exceptions.ConnectionError:
+            print(f"Erro de Conexão: A API no endereço {url} está desligada.")
+            return []
+        except Exception as e:
+            print(f"Erro inesperado: {e}")
+            return []
 
     def extractData(self, response):
         result = []
