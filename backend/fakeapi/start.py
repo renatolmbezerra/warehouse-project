@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from faker import Faker
 import pandas as pd
-import random
 
 
 app = FastAPI()
@@ -9,21 +8,18 @@ fake = Faker()
 
 file_name = 'backend/fakeapi/products.csv'
 df = pd.read_csv(file_name)
-df['indice'] = range(1, len(df) +1)
-df.set_index('indice', inplace=True)
 
 lojapadraoonline = 11
 
 @app.get("/gerar_compra") # Rota para gerar única linha
 async def gerar_compra():
-    index = random.randint(1, len(df)-1)
-    tuple = df.iloc[index]
+    row = df.sample(n=1).iloc[0]
     return [{
             "client": fake.name(),
             "creditcard": fake.credit_card_provider(),
-            "product": tuple["Product Name"],
-            "ean": int(tuple["EAN"]),
-            "price":  round(float(tuple["Price"])*1.2,2),
+            "product": row["Product Name"],
+            "ean": int(row["EAN"]),
+            "price":  round(float(row["Price"])*1.2,2),
             "clientPosition": fake.location_on_land(),
             "store": lojapadraoonline,
             "dateTime": fake.iso8601()
@@ -40,14 +36,13 @@ async def gerar_compra(numero_registro: int):
  
 
     for _ in range(numero_registro):
-        index = random.randint(1, len(df)-1)
-        tuple = df.iloc[index]
+        row = df.sample(n=1).iloc[0]
         compra = {
                 "client": fake.name(),
                 "creditcard": fake.credit_card_provider(),
-                "product": tuple["Product Name"],
-                "ean": int(tuple["EAN"]),
-                "price":  round(float(tuple["Price"])*1.2,2),
+                "product": row["Product Name"],
+                "ean": int(row["EAN"]),
+                "price":  round(float(row["Price"])*1.2,2),
                 # "price":  "hoje é de graça",
                 "clientPosition": fake.location_on_land(),
                 "store": lojapadraoonline,
