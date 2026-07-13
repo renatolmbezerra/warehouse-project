@@ -1,27 +1,47 @@
 import os
-import sys
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+import pyodbc
+from sqlalchemy import create_engine, Engine
+from typing import Dict
+from dotenv import load_dotenv
+from pathlib import Path
 
+load_dotenv(dotenv_path=Path(__file__).parent / ".env", override=True)
 
-def getDbConnectionById(id: int):
-    configs = {
-        "DB_USER": os.getenv(f"DB_USER{id}"),
-        "DB_PASSWORD": os.getenv(f"DB_PASSWORD{id}"),
-        "DB_HOST": os.getenv(f"DB_HOST{id}"),
-        "DB_NAME": os.getenv(f"DB_NAME{id}"),
-        "DB_DRIVER": os.getenv(f"DB_DRIVER{id}", "ODBC Driver 18 for SQL Server"),
-    }
+# Cache de engines mapeado pelo nome do banco de dados (db_name)
+_engines: Dict[str, Engine] = {}
 
-    for var in configs:
-        if configs[var] is None:
-            print(f"A variável de ambiente {var} não está definida.")
-            sys.exit(1)
+def get_engine(db_name: str) -> Engine:
+    """
+    Retorna a engine SQLAlchemy para um banco de dados específico no SQL Server.
+    Utiliza cache para reaproveitar conexões.
+    """
+    if db_name in _engines:
+        return _engines[db_name]
 
-    # Adicionado TrustServerCertificate=yes para evitar problemas com certificados no Driver 18
-    driver_param = configs['DB_DRIVER'].replace(" ", "+")
-    DATABASE_URI = f"mssql+pyodbc://{configs['DB_USER']}:{configs['DB_PASSWORD']}@{configs['DB_HOST']}/{configs['DB_NAME']}?driver={driver_param}&TrustServerCertificate=yes"
+    # Credenciais do servidor
+    DB_SERVER = os.getenv("DB_SERVER")
+    DB_USER = os.getenv("DB_USER")
+    DB_PASSWORD = os.getenv("DB_PASSWORD")
+    DB_DRIVER = os.getenv("DB_DRIVER")
 
-    engine = create_engine(DATABASE_URI)
-    Session = sessionmaker(bind=engine)
-    return Session()
+    if not all([DB_SERVER, DB_USER, DB_PASSWORD, DB_DRIVER]):
+        raise ValueError("Variáveis de ambiente do servidor SQL não estão totalmente definidas.")
+
+    conn_str = (
+        f"DRIVER={{{DB_DRIVER}}};"
+        f"SERVER={DB_SERVER};"
+        f"DATABASE={db_name};" # Única parte que varia por banco
+        f"UID={DB_USER};"
+        f"PWD={DB_PASSWORD};"
+        f"TrustServerCertificate=yes;"
+    )
+
+    engine = create_engine(
+        "mssql+pyodbc://",
+        creator=lambda: pyodbc.connect(conn_str),
+        fast_executemany=True,
+        pool_pre_ping=True
+    )
+    
+    _engines[db_name] = engine
+    return engine

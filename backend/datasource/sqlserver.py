@@ -1,83 +1,69 @@
 import pandas as pd
-from tools.sql.db.database_connection import getDbConnectionById
-from contracts.transactions import Transaction
-import os
+from tools.sql.db.database_connection import get_engine
 import datetime
 from io import BytesIO
 from tools.aws.client import S3Client
-import sys
-
 
 class SQLServerCollector:
-    def __init__(self, aws_client: S3Client, bdId: int):
-        self._envs = {
-            "fileName": os.environ.get(f"DB_NAME{bdId}"),
-            "tbName": os.environ.get(f"DB_TABLE{bdId}"),
-        }
-        self._bdId = bdId
-        self._model = Transaction
+    def __init__(self, aws_client: S3Client, db_name: str, table_name: str, time_column: str = "transaction_time"):
+        self.db_name = db_name
+        self.table_name = table_name
+        self.time_column = time_column # Coluna usada para filtrar os 30 dias
         self._buffer = None
         self._aws = aws_client
 
-        for var in self._envs:
-            if self._envs[var] is None:
-                print(f"A variável de ambiente {var} não está definida.")
-                sys.exit(1)
+    def start(self, full_load: bool = False):
+        """
+        Inicia o processo de extração.
+        Se full_load=True, traz a tabela inteira.
+        Se full_load=False (padrão), traz a janela incremental de 30 dias.
+        """
+        df = self.extract_data(full_load)
+        if df.empty:
+            print(f"Nenhum dado encontrado para {self.db_name}.{self.table_name}")
+            return False
 
-    def start(self):
-        df = self.extract_data()
-        print("Processo extract com sucesso")
+        print(f"Extração concluída. Linhas processadas: {len(df)}")
         df = self.transform_add_columns(df, "sqlserver")
         print("Processo transform com sucesso")
         self.convert_to_delta(df)
 
         if self._buffer is not None:
-            file_name = self.fileName()
-            print(file_name)
+            file_name = self.generate_file_name(full_load)
+            print(f"Enviando para S3: {file_name}")
             self._aws.upload_file(self._buffer, file_name)
             return True
 
         return False
 
-    def extract_data(self):
-        session = getDbConnectionById(self._bdId)
-        query = self.createYesterdayQuery()
-        df = pd.read_sql(query, session.bind)
-        session.close()
-        return df
+    def extract_data(self, full_load: bool) -> pd.DataFrame:
+        engine = get_engine(self.db_name)
+        
+        if full_load:
+            # Carga Full: traz a tabela completa
+            query = f"SELECT * FROM {self.table_name}"
+        else:
+            # Carga Incremental: janela de 30 dias usando SQL Server syntax
+            query = f"SELECT * FROM {self.table_name} WHERE {self.time_column} >= DATEADD(day, -30, GETDATE())"
+            
+        print(f"Executando query: {query}")
+        return pd.read_sql(query, con=engine)
 
-    def transform_add_columns(self, df, datasource_value):
-        df["created_at"] = datetime.datetime.now().isoformat()
+    def transform_add_columns(self, df: pd.DataFrame, datasource_value: str) -> pd.DataFrame:
+        df["dt_extracao"] = datetime.datetime.now().isoformat()
         df["datasource"] = datasource_value
         return df
 
-    def convert_to_delta(self, df):
+    def convert_to_delta(self, df: pd.DataFrame):
         try:
-            # Converte o DataFrame do pandas para uma tabela PyArrow
+            # Converte o DataFrame do pandas para formato Parquet e joga no buffer
             self._buffer = BytesIO()
-            try:
-                df.to_parquet(self._buffer)
-                return self._buffer
-            except:
-                print("Error ao transformar o Df em Parquet")
-                self._buffer = None
-
+            df.to_parquet(self._buffer, index=False)
         except Exception as e:
-            print(f"Erro ao converter DataFrame para Delta: {e}")
+            print(f"Erro ao converter DataFrame para Parquet: {e}")
             self._buffer = None
 
-    def fileName(self):
-        data_atual = datetime.datetime.now().isoformat()
-        match = data_atual.split(".")
-        fileName = self._envs["fileName"]
-        return f"sqlserver/{fileName}-{match[0]}.parquet"
-
-    def createYesterdayQuery(self):
-        yesterday = datetime.datetime.now() - datetime.timedelta(days=1)
-        yesterday = yesterday.strftime("%Y-%m-%d")
-        table = self._envs["tbName"]
-        # Ajustado para sintaxe do SQL Server (removido ::timestamp)
-        query = (
-            f"SELECT * FROM {table} WHERE transaction_time >= '{yesterday}'"
-        )
-        return query
+    def generate_file_name(self, full_load: bool) -> str:
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        prefix = "full" if full_load else "incremental"
+        return f"bronze/sqlserver/{self.db_name}/{self.table_name}/{prefix}_{timestamp}.parquet"

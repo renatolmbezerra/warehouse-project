@@ -90,4 +90,5 @@ class APICollector:
 
     def fileName(self):
         data_atual = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        return f"api/api-response-compra/{data_atual}.parquet"
+        # Padronizando com a camada Bronze: bronze/<origem>/<sistema_ou_banco>/<tabela_ou_endpoint>/prefixo_timestamp.parquet
+        return f"bronze/api/fakeapi/compras/incremental_{data_atual}.parquet"
