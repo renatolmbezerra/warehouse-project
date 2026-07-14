@@ -1,8 +1,8 @@
-from datasource.api import APICollector
-from datasource.sqlserver import SQLServerCollector
+from backend.datasource.api import APICollector
+from backend.datasource.sqlserver import SQLServerCollector
 from dotenv import load_dotenv
-from contracts.schema import CompraSchema
-from tools.aws.client import S3Client
+from backend.contracts.schema import CompraSchema
+from backend.tools.aws.client import S3Client
 
 import time
 import schedule
@@ -12,7 +12,7 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Carrega as variáveis do arquivo .env para o sistema
-load_dotenv()
+load_dotenv(override=True)
 
 schema = CompraSchema
 aws = S3Client()

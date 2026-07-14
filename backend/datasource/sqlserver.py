@@ -1,8 +1,8 @@
 import pandas as pd
-from tools.sql.db.database_connection import get_engine
+from backend.tools.sql.db.database_connection import get_engine
 import datetime
 from io import BytesIO
-from tools.aws.client import S3Client
+from backend.tools.aws.client import S3Client
 
 class SQLServerCollector:
     def __init__(self, aws_client: S3Client, db_name: str, table_name: str, time_column: str = "transaction_time"):
@@ -66,4 +66,4 @@ class SQLServerCollector:
     def generate_file_name(self, full_load: bool) -> str:
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         prefix = "full" if full_load else "incremental"
-        return f"bronze/sqlserver/{self.db_name}/{self.table_name}/{prefix}_{timestamp}.parquet"
+        return f"bronze/sqlserver/{self.db_name}/{self.table_name}/{prefix}_{timestamp}.parquet"

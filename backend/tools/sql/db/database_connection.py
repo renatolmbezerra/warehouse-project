@@ -5,7 +5,9 @@ from typing import Dict
 from dotenv import load_dotenv
 from pathlib import Path
 
-load_dotenv(dotenv_path=Path(__file__).parent / ".env", override=True)
+# Caminho para o .env na raiz do projeto
+root_dir = Path(__file__).resolve().parent.parent.parent.parent.parent
+load_dotenv(dotenv_path=root_dir / ".env", override=True)
 
 # Cache de engines mapeado pelo nome do banco de dados (db_name)
 _engines: Dict[str, Engine] = {}
@@ -45,3 +47,20 @@ def get_engine(db_name: str) -> Engine:
     
     _engines[db_name] = engine
     return engine
+
+if __name__ == "__main__":
+    from sqlalchemy import text
+    
+    databases_test = ["Tecpel", "Fluig"]
+    
+    for database in databases_test:
+        try:
+            print(f"\\nTentando conectar ao banco de dados: {database}...")
+            engine_banco = get_engine(database)
+            
+            with engine_banco.connect() as connection:
+                result = connection.execute(text("SELECT 1"))
+                print(f"[SUCESSO] Conexão com '{database}' estabelecida! (SELECT 1 retornou: {result.scalar()})")
+                
+        except Exception as e:
+            print(f"[ERRO] Falha ao conectar em '{database}': {e}")
