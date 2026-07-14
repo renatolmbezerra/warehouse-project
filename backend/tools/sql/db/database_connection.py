@@ -48,6 +48,7 @@ def get_engine(db_name: str) -> Engine:
     _engines[db_name] = engine
     return engine
 
+# Teste de conexao com o bancos de dados
 if __name__ == "__main__":
     from sqlalchemy import text
     

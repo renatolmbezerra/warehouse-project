@@ -5,10 +5,11 @@ from io import BytesIO
 from backend.tools.aws.client import S3Client
 
 class SQLServerCollector:
-    def __init__(self, aws_client: S3Client, db_name: str, table_name: str, time_column: str = "transaction_time"):
+    def __init__(self, aws_client: S3Client, db_name: str, table_name: str, time_column: str = "transaction_time", date_format_style: int = None):
         self.db_name = db_name
         self.table_name = table_name
         self.time_column = time_column # Coluna usada para filtrar os 30 dias
+        self.date_format_style = date_format_style
         self._buffer = None
         self._aws = aws_client
 
@@ -44,7 +45,11 @@ class SQLServerCollector:
             query = f"SELECT * FROM {self.table_name}"
         else:
             # Carga Incremental: janela de 30 dias usando SQL Server syntax
-            query = f"SELECT * FROM {self.table_name} WHERE {self.time_column} >= DATEADD(day, -30, GETDATE())"
+            time_expr = self.time_column
+            if self.date_format_style is not None:
+                time_expr = f"TRY_CONVERT(DATETIME, {self.time_column}, {self.date_format_style})"
+            
+            query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -30, GETDATE())"
             
         print(f"Executando query: {query}")
         return pd.read_sql(query, con=engine)

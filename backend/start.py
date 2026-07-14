@@ -28,13 +28,14 @@ def apiCollector(schema, aws, repeat):
     return response
 
 
-def sqlserverCollector(aws, db_name, table_name, time_column="transaction_time", full_load=False):
-    # Repassando o time_column para a classe SQLServerCollector
+def sqlserverCollector(aws, db_name, table_name, time_column="transaction_time", full_load=False, date_format_style=None):
+    # Repassando o time_column e date_format_style para a classe SQLServerCollector
     response = SQLServerCollector(
         aws_client=aws, 
         db_name=db_name, 
         table_name=table_name, 
-        time_column=time_column
+        time_column=time_column,
+        date_format_style=date_format_style
     ).start(full_load=full_load)
 
     if response:
@@ -48,40 +49,67 @@ def sqlserverCollector(aws, db_name, table_name, time_column="transaction_time",
 # Rotinas em Lote (Múltiplas Tabelas)
 # ==========================================
 
-def run_tecpel_jobs(full_load=False):
+def run_tecpel_jobs(force_full_load=False):
     """
-    Rotina que extrai todas as tabelas mapeadas do banco 'Tecpel'
+    Rotina que extrai as tabelas mapeadas do banco 'Tecpel' separando fatos e dimensões.
     """
-    logging.info(f"Iniciando rotina do banco Tecpel (Full Load: {full_load})")
+    logging.info(f"Iniciando rotina do banco Tecpel (Force Full Load em Fatos: {force_full_load})")
     
-    # Usando um dicionário para amarrar a tabela à sua coluna de data específica!
-    tabelas_tecpel = {
-        "TITMMOV": "DATA_CRIACAO",    # Substitua pelo nome real da coluna na tabela TITMMOV
-        "TMOV": "DATA_EMISSAO"        # Substitua pelo nome real da coluna na tabela TMOV
+    # 1. Tabelas Fato (Carga Incremental por padrão, a menos que force_full_load=True)
+    fatos = {      
+        "TITMMOV": "DATAEMISSAO",  
+        "TMOV": "DATASAIDA"       
     }
     
-    for tabela, coluna_data in tabelas_tecpel.items():
+    for tabela, coluna_data in fatos.items():
         try:
-            sqlserverCollector(aws, db_name="Tecpel", table_name=tabela, time_column=coluna_data, full_load=full_load)
+            sqlserverCollector(aws, db_name="Tecpel", table_name=tabela, time_column=coluna_data, full_load=force_full_load)
         except Exception as e:
-            logging.error(f"Erro ao extrair Tecpel.{tabela}: {e}")
+            logging.error(f"Erro ao extrair Fato Tecpel.{tabela}: {e}")
 
-def run_fluig_jobs(full_load=False):
-    """
-    Rotina que extrai as tabelas mapeadas do banco 'Fluig'
-    """
-    logging.info(f"Iniciando rotina do banco Fluig (Full Load: {full_load})")
+    # 2. Tabelas Dimensão (Carga sempre Full Load, sem precisar de coluna de data)
+    dimensoes = [
+        "FCFO", 
+        "TPRD"
+    ]
     
-    tabelas_fluig = {
-        "ML001105": "DATA_CRIACAO",   # Coluna para a janela incremental
-        "ML001106": "DATA_CRIACAO"    # Coluna para a janela incremental
+    for tabela in dimensoes:
+        try:
+            sqlserverCollector(aws, db_name="Tecpel", table_name=tabela, time_column=None, full_load=True)
+        except Exception as e:
+            logging.error(f"Erro ao extrair Dimensão Tecpel.{tabela}: {e}")
+
+
+def run_fluig_jobs(force_full_load=False):
+    """
+    Rotina que extrai as tabelas mapeadas do banco 'Fluig' separando fatos e dimensões.
+    """
+    logging.info(f"Iniciando rotina do banco Fluig (Force Full Load em Fatos: {force_full_load})")
+    
+    # 1. Tabelas Fato (Carga Incremental)
+    fatos = {
+        "ML001026": "dataEmissao",   
+        "ML001094": "dataemissao"    
     }
     
-    for tabela, coluna_data in tabelas_fluig.items():
+    for tabela, coluna_data in fatos.items():
         try:
-            sqlserverCollector(aws, db_name="Fluig", table_name=tabela, time_column=coluna_data, full_load=full_load)
+            # Fluig usa data no formato DD/MM/YYYY em texto, então passamos o estilo 103
+            sqlserverCollector(aws, db_name="Fluig", table_name=tabela, time_column=coluna_data, full_load=force_full_load, date_format_style=103)
         except Exception as e:
-            logging.error(f"Erro ao extrair Fluig.{tabela}: {e}")
+            logging.error(f"Erro ao extrair Fato Fluig.{tabela}: {e}")
+
+    # 2. Tabelas Dimensão (Sempre Full Load)
+    dimensoes = [
+        "ML001048"
+    ]
+    
+    for tabela in dimensoes:
+        try:
+            sqlserverCollector(aws, db_name="Fluig", table_name=tabela, time_column=None, full_load=True)
+        except Exception as e:
+            logging.error(f"Erro ao extrair Dimensão Fluig.{tabela}: {e}")
+
 
 # ==========================================
 # Agendamentos
@@ -92,18 +120,21 @@ def run_fluig_jobs(full_load=False):
 
 # 2. Extrações de Banco de Dados (Carga Incremental a cada 1 hora no horário comercial)
 # Define o horário comercial das 08:00 às 18:00
-horarios_comerciais = [f"{h:02d}:00" for h in range(8, 19)]
 
-for hora in horarios_comerciais:
-    schedule.every().day.at(hora).do(run_tecpel_jobs, full_load=False)
-    schedule.every().day.at(hora).do(run_fluig_jobs, full_load=False)
+# horarios_comerciais = [f"{h:02d}:00" for h in range(8, 19)]
+
+# for hora in horarios_comerciais:
+#     schedule.every().day.at(hora).do(run_tecpel_jobs, force_full_load=False)
+#     schedule.every().day.at(hora).do(run_fluig_jobs, force_full_load=False)
 
 # (Descomente este bloco se quiser rodar na hora para testar)
-# if __name__ == "__main__":
-#     logging.info("Iniciando o agendador. Pressione Ctrl+C para sair.")
-#     run_tecpel_jobs(full_load=True) # Exemplo: rodar manual a primeira vez
-#     run_fluig_jobs(full_load=True)  # Exemplo: rodar manual a primeira vez
-#     
-#     while True:
-#         schedule.run_pending()
-#         time.sleep(1)
+if __name__ == "__main__":
+    logging.info("Iniciando o agendador. Pressione Ctrl+C para sair.")
+    run_tecpel_jobs(force_full_load=False) # Exemplo: rodar manual a primeira vez
+    run_fluig_jobs(force_full_load=False)  # Exemplo: rodar manual a primeira vez
+    apiCollector(schema, aws, 50)   # Roda a extração da API manualmente
+
+    
+    # while True:
+    #     schedule.run_pending()
+    #     time.sleep(1)
