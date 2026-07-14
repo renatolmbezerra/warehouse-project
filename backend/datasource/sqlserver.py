@@ -44,12 +44,12 @@ class SQLServerCollector:
             # Carga Full: traz a tabela completa
             query = f"SELECT * FROM {self.table_name}"
         else:
-            # Carga Incremental: janela de 30 dias usando SQL Server syntax
+            # Carga Incremental: janela de 7 dias usando SQL Server syntax
             time_expr = self.time_column
             if self.date_format_style is not None:
                 time_expr = f"TRY_CONVERT(DATETIME, {self.time_column}, {self.date_format_style})"
             
-            query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -30, GETDATE())"
+            query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -7, GETDATE())"
             
         print(f"Executando query: {query}")
         return pd.read_sql(query, con=engine)
