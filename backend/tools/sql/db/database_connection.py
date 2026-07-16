@@ -1,5 +1,8 @@
 import os
 import pyodbc
+import logging
+
+logger = logging.getLogger(__name__)
 from sqlalchemy import create_engine, Engine
 from typing import Dict
 from dotenv import load_dotenv
@@ -56,12 +59,12 @@ if __name__ == "__main__":
     
     for database in databases_test:
         try:
-            print(f"\\nTentando conectar ao banco de dados: {database}...")
+            logger.info(f"Tentando conectar ao banco de dados: {database}...")
             engine_banco = get_engine(database)
             
             with engine_banco.connect() as connection:
                 result = connection.execute(text("SELECT 1"))
-                print(f"[SUCESSO] Conexão com '{database}' estabelecida! (SELECT 1 retornou: {result.scalar()})")
+                logger.info(f"[SUCESSO] Conexão com '{database}' estabelecida! (SELECT 1 retornou: {result.scalar()})")
                 
         except Exception as e:
-            print(f"[ERRO] Falha ao conectar em '{database}': {e}")
+            logger.exception(f"Falha ao conectar em '{database}'")

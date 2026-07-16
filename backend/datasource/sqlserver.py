@@ -1,5 +1,8 @@
 import pandas as pd
+import logging
 from backend.tools.sql.db.database_connection import get_engine
+
+logger = logging.getLogger(__name__)
 import datetime
 from io import BytesIO
 from backend.tools.aws.client import S3Client
@@ -21,17 +24,17 @@ class SQLServerCollector:
         """
         df = self.extract_data(full_load)
         if df.empty:
-            print(f"Nenhum dado encontrado para {self.db_name}.{self.table_name}")
+            logger.warning(f"Nenhum dado encontrado para {self.db_name}.{self.table_name}")
             return False
 
-        print(f"Extração concluída. Linhas processadas: {len(df)}")
+        logger.info(f"Extração concluída. Linhas processadas: {len(df)}")
         df = self.transform_add_columns(df, "sqlserver")
-        print("Processo transform com sucesso")
+        logger.info("Processo transform com sucesso")
         self.convert_to_delta(df)
 
         if self._buffer is not None:
             file_name = self.generate_file_name(full_load)
-            print(f"Enviando para S3: {file_name}")
+            logger.info(f"Enviando para S3: {file_name}")
             self._aws.upload_file(self._buffer, file_name)
             return True
 
@@ -51,7 +54,7 @@ class SQLServerCollector:
             
             query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -7, GETDATE())"
             
-        print(f"Executando query: {query}")
+        logger.debug(f"Executando query: {query}")
         return pd.read_sql(query, con=engine)
 
     def transform_add_columns(self, df: pd.DataFrame, datasource_value: str) -> pd.DataFrame:
@@ -65,7 +68,7 @@ class SQLServerCollector:
             self._buffer = BytesIO()
             df.to_parquet(self._buffer, index=False)
         except Exception as e:
-            print(f"Erro ao converter DataFrame para Parquet: {e}")
+            logger.exception("Erro ao converter DataFrame para Parquet")
             self._buffer = None
 
     def generate_file_name(self, full_load: bool) -> str:
