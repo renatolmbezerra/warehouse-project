@@ -1,0 +1,29 @@
+version: 2
+
+sources:
+  - name: bronze_tecpel
+    tables:
+      - name: tmov
+        meta:
+          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TMOV/*.parquet"
+      - name: titmmov
+        meta:
+          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TITMMOV/*.parquet"
+      - name: fcfo
+        meta:
+          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/FCFO/*.parquet"
+      - name: tprd
+        meta:
+          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TPRD/*.parquet"
+
+  - name: bronze_fluig
+    tables:
+      - name: ml001026
+        meta:
+          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Fluig/ML001026/*.parquet"
+      - name: ml001094
+        meta:
+          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Fluig/ML001094/*.parquet"
+      - name: ml001048
+        meta:
+          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Fluig/ML001048/*.parquet"

@@ -1,0 +1,22 @@
+name: 'warehouse_dbt'
+version: '1.0.0'
+config-version: 2
+
+profile: 'warehouse_dbt'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  warehouse_dbt:
+    silver:
+      +materialized: external
+      +format: parquet
