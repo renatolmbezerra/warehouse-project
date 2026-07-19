@@ -20,3 +20,6 @@ models:
     silver:
       +materialized: external
       +format: parquet
+    gold:
+      +materialized: external
+      +format: parquet

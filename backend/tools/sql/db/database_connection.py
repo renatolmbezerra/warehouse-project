@@ -44,8 +44,8 @@ def get_engine(db_name: str) -> Engine:
     engine = create_engine(
         "mssql+pyodbc://",
         creator=lambda: pyodbc.connect(conn_str),
-        fast_executemany=True,
-        pool_pre_ping=True
+        pool_pre_ping=True,
+        use_insertmanyvalues=True # Otimização nativa do SQLAlchemy 2.0 (muito mais segura que o fast_executemany do pyodbc)
     )
     
     _engines[db_name] = engine

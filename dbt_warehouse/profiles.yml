@@ -4,6 +4,7 @@ warehouse_dbt:
     dev:
       type: duckdb
       path: ':memory:' # Usa a memória RAM para processar tudo super rápido
+      threads: 6
       extensions:
         - httpfs # Necessário para ler/escrever no S3
       settings:
