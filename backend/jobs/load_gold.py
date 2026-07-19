@@ -64,7 +64,7 @@ def load_gold_to_sqlserver():
                 chunk_df.to_sql(table_name, con=engine, if_exists='append', index=False)
                 logger.info(f"Lote {i+1}/{total_chunks} inserido com sucesso ({(end_idx/len(df))*100:.1f}%)")
                 
-        logger.info("Carga concluída com sucesso! 🎉")
+        logger.info("Carga concluída com sucesso!")
         
     except Exception as e:
         logger.exception("Erro durante a carga da camada Gold:")
