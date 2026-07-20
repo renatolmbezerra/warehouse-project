@@ -1,10 +1,10 @@
 {{ config(
-    location="s3://" ~ env_var('S3_BUCKET_NAME') ~ "/silver/sqlserver/Tecpel/TMOV/slv_tecpel_tmov.parquet"
+    location="s3://" ~ env_var('S3_BUCKET_NAME') ~ "/silver/sqlserver/Tecpel/TMOVCOMPL/slv_tecpel_tmovcompl.parquet"
 ) }}
 
 WITH source AS (
     SELECT *
-    FROM {{ source('bronze_tecpel', 'tmov') }}
+    FROM {{ source('bronze_tecpel', 'tmovcompl') }}
 ),
 
 deduplicated AS (

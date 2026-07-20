@@ -25,7 +25,7 @@ def load_gold_to_sqlserver():
         aws = S3Client()
         
         # 1. Baixar o arquivo Parquet do S3 para a memória
-        s3_key = "gold/sqlserver/Tecpel/gld_movimentos_itens.parquet"
+        s3_key = "gold/sqlserver/Tecpel/gld_fct_vendas_itens.parquet"
         logger.info(f"Baixando {s3_key} do S3...")
         
         file_obj = aws.download_file(s3_key)
@@ -44,8 +44,7 @@ def load_gold_to_sqlserver():
         engine = get_engine(db_name)
         
         # 4. Inserir os dados na tabela
-        # Mudando o nome temporariamente para v2 para desviar de possíveis Locks (tabelas travadas)
-        table_name = "gld_movimentos_itens"
+        table_name = "fct_vendas"
         logger.info(f"Iniciando inserção na tabela {table_name} em lotes controlados...")
         
         # Primeiro, criamos a tabela vazia ou substituímos a antiga (if_exists='replace') enviando 0 linhas

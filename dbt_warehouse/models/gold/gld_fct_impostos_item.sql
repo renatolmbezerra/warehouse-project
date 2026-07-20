@@ -1,0 +1,21 @@
+{{ config(
+    location="s3://" ~ env_var('S3_BUCKET_NAME') ~ "/gold/sqlserver/Tecpel/gld_fct_impostos_item.parquet"
+) }}
+
+SELECT
+      T.CODCOLIGADA
+    , T.IDMOV
+    , T.NSEQITMMOV
+    , MAX(CASE WHEN T.CODTRB = 'IPI'    THEN T.VALOR                ELSE 0    END) AS IPI
+    , MAX(CASE WHEN T.CODTRB = 'ICMS'   THEN T.VALOR                ELSE 0    END) AS ICMS_VALOR
+    , MAX(CASE WHEN T.CODTRB = 'ICMS'   THEN T.VALORICMSDESONERADO  ELSE 0    END) AS ICMS_DES
+    , MAX(CASE WHEN T.CODTRB = 'ICMS'   THEN T.BASEDECALCULO        ELSE NULL END) AS ICMS_BASE
+    , MAX(CASE WHEN T.CODTRB = 'ICMSST' THEN T.VALOR                ELSE 0    END) AS ICMS_ST
+    , MAX(CASE WHEN T.CODTRB = 'COFINS' THEN T.VALOR                ELSE 0    END) AS COFINS
+    , MAX(CASE WHEN T.CODTRB = 'COFIMP' THEN T.VALOR                ELSE 0    END) AS COFIMP
+    , MAX(CASE WHEN T.CODTRB = 'PIS'    THEN T.VALOR                ELSE 0    END) AS PIS
+    , MAX(CASE WHEN T.CODTRB = 'PISIMP' THEN T.VALOR                ELSE 0    END) AS PISIMP
+FROM {{ ref('slv_tecpel_ttrbmov') }} T
+WHERE T.CODCOLIGADA = 2
+  AND T.CODTRB IN ('IPI','ICMS','ICMSST','COFINS','COFIMP','PIS','PISIMP')
+GROUP BY T.CODCOLIGADA, T.IDMOV, T.NSEQITMMOV

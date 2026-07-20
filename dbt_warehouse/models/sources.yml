@@ -1,29 +1,105 @@
 version: 2
-
 sources:
-  - name: bronze_tecpel
-    tables:
-      - name: tmov
-        meta:
-          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TMOV/*.parquet"
-      - name: titmmov
-        meta:
-          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TITMMOV/*.parquet"
-      - name: fcfo
-        meta:
-          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/FCFO/*.parquet"
-      - name: tprd
-        meta:
-          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TPRD/*.parquet"
-
-  - name: bronze_fluig
-    tables:
-      - name: ml001026
-        meta:
-          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Fluig/ML001026/*.parquet"
-      - name: ml001094
-        meta:
-          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Fluig/ML001094/*.parquet"
-      - name: ml001048
-        meta:
-          external_location: "s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Fluig/ML001048/*.parquet"
+- name: bronze_tecpel
+  tables:
+  - name: tmov
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TMOV/*.parquet
+  - name: titmmov
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TITMMOV/*.parquet
+  - name: fcfo
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/FCFO/*.parquet
+  - name: tprd
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TPRD/*.parquet
+  - name: ttrbmov
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TTRBMOV/*.parquet
+  - name: daliqinterestadual
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/DALIQINTERESTADUAL/*.parquet
+  - name: tven
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TVEN/*.parquet
+  - name: tvencompl
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TVENCOMPL/*.parquet
+  - name: gconsist
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/GCONSIST/*.parquet
+  - name: zmd_tabpreco
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/ZMD_TABPRECO/*.parquet
+  - name: zmd_categoria
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/ZMD_CATEGORIA/*.parquet
+  - name: flan
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/FLAN/*.parquet
+  - name: tprodutodef
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TPRODUTODEF/*.parquet
+  - name: tmarca
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TMARCA/*.parquet
+  - name: gfilial
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/GFILIAL/*.parquet
+  - name: fcfodef
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/FCFODEF/*.parquet
+  - name: tcpg
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TCPG/*.parquet
+  - name: ftb3
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/FTB3/*.parquet
+  - name: tmovcompl
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TMOVCOMPL/*.parquet
+  - name: titmmovcompl
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TITMMOVCOMPL/*.parquet
+  - name: ttra
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TTRA/*.parquet
+  - name: ttb1
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TTB1/*.parquet
+  - name: ttb2
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TTB2/*.parquet
+  - name: ttb3
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TTB3/*.parquet
+  - name: ttb4
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TTB4/*.parquet
+  - name: ttrbprd
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TTRBPRD/*.parquet
+  - name: ttmv
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TTMV/*.parquet
+  - name: trelsld
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TRELSLD/*.parquet
+  - name: estoque_saldo_produto_mes
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/ESTOQUE_SALDO_PRODUTO_MES/*.parquet
+  - name: tloc
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TLOC/*.parquet
+- name: bronze_fluig
+  tables:
+  - name: ml001026
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Fluig/ML001026/*.parquet
+  - name: ml001094
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Fluig/ML001094/*.parquet
+  - name: ml001048
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Fluig/ML001048/*.parquet
