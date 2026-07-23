@@ -11,7 +11,7 @@ class SQLServerCollector:
     def __init__(self, aws_client: S3Client, db_name: str, table_name: str, time_column: str = "transaction_time", date_format_style: int = None):
         self.db_name = db_name
         self.table_name = table_name
-        self.time_column = time_column # Coluna usada para filtrar os 30 dias
+        self.time_column = time_column # Coluna usada para filtrar os 7 dias da janela incremental
         self.date_format_style = date_format_style
         self._buffer = None
         self._aws = aws_client
@@ -20,7 +20,7 @@ class SQLServerCollector:
         """
         Inicia o processo de extração.
         Se full_load=True, traz a tabela inteira.
-        Se full_load=False (padrão), traz a janela incremental de 30 dias.
+        Se full_load=False (padrão), traz a janela incremental de 7 dias.
         """
         df = self.extract_data(full_load)
         if df.empty:
