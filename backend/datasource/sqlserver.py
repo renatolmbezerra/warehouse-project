@@ -8,11 +8,12 @@ from io import BytesIO
 from backend.tools.aws.client import S3Client
 
 class SQLServerCollector:
-    def __init__(self, aws_client: S3Client, db_name: str, table_name: str, time_column: str = "transaction_time", date_format_style: int = None):
+    def __init__(self, aws_client: S3Client, db_name: str, table_name: str, time_column: str = "transaction_time", date_format_style: int = None, custom_where: str = None):
         self.db_name = db_name
         self.table_name = table_name
         self.time_column = time_column # Coluna usada para filtrar os 7 dias da janela incremental
         self.date_format_style = date_format_style
+        self.custom_where = custom_where
         self._buffer = None
         self._aws = aws_client
 
@@ -47,12 +48,15 @@ class SQLServerCollector:
             # Carga Full: traz a tabela completa
             query = f"SELECT * FROM {self.table_name}"
         else:
-            # Carga Incremental: janela de 7 dias usando SQL Server syntax
-            time_expr = self.time_column
-            if self.date_format_style is not None:
-                time_expr = f"TRY_CONVERT(DATETIME, {self.time_column}, {self.date_format_style})"
-            
-            query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -7, GETDATE())"
+            # Carga Incremental: janela de 7 dias usando SQL Server syntax ou custom_where
+            if self.custom_where:
+                query = f"SELECT * FROM {self.table_name} WHERE {self.custom_where}"
+            else:
+                time_expr = self.time_column
+                if self.date_format_style is not None:
+                    time_expr = f"TRY_CONVERT(DATETIME, {self.time_column}, {self.date_format_style})"
+                
+                query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -7, GETDATE())"
             
         logger.debug(f"Executando query: {query}")
         return pd.read_sql(query, con=engine)

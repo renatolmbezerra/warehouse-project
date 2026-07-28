@@ -28,14 +28,15 @@ def apiCollector(schema, aws, repeat):
     return response
 
 
-def sqlserverCollector(aws, db_name, table_name, time_column="transaction_time", full_load=False, date_format_style=None):
-    # Repassando o time_column e date_format_style para a classe SQLServerCollector
+def sqlserverCollector(aws, db_name, table_name, time_column="transaction_time", full_load=False, date_format_style=None, custom_where=None):
+    # Repassando todos os parâmetros para a classe SQLServerCollector
     response = SQLServerCollector(
         aws_client=aws, 
         db_name=db_name, 
         table_name=table_name, 
         time_column=time_column,
-        date_format_style=date_format_style
+        date_format_style=date_format_style,
+        custom_where=custom_where
     ).start(full_load=full_load)
 
     if response:
@@ -55,22 +56,55 @@ def run_tecpel_jobs(force_full_load=False):
     """
     logging.info(f"Iniciando rotina do banco Tecpel (Force Full Load em Fatos: {force_full_load})")
     
-    # 1. Tabelas Fato (Carga Incremental por padrão, a menos que force_full_load=True)
     fatos = {      
         "TITMMOV": "DATAEMISSAO",  
-        "TMOV": "DATASAIDA"       
+        "TMOV": "DATASAIDA",
+        "TTRBMOV": "CUSTOM_WHERE",
+        "TMOVCOMPL": "CUSTOM_WHERE",
+        "TITMMOVCOMPL": "CUSTOM_WHERE",
+        "FLAN": "DATACRIACAO",
+        "TRELSLD": "DATAMOVIMENTO",
+        "ESTOQUE_SALDO_PRODUTO_MES": "DATA_SALDO"
+    }
+    
+    # Subqueries customizadas para tabelas filhas que não possuem data própria (baseiam-se na TMOV)
+    custom_wheres = {
+        "TTRBMOV": "EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TTRBMOV.CODCOLIGADA AND TMOV.IDMOV = TTRBMOV.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -7, GETDATE()))",
+        "TMOVCOMPL": "EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TMOVCOMPL.CODCOLIGADA AND TMOV.IDMOV = TMOVCOMPL.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -7, GETDATE()))",
+        "TITMMOVCOMPL": "EXISTS (SELECT 1 FROM TITMMOV WHERE TITMMOV.CODCOLIGADA = TITMMOVCOMPL.CODCOLIGADA AND TITMMOV.IDMOV = TITMMOVCOMPL.IDMOV AND TITMMOV.NSEQITMMOV = TITMMOVCOMPL.NSEQITMMOV AND TITMMOV.DATAEMISSAO >= DATEADD(day, -7, GETDATE()))"
     }
     
     for tabela, coluna_data in fatos.items():
         try:
-            sqlserverCollector(aws, db_name="Tecpel", table_name=tabela, time_column=coluna_data, full_load=force_full_load)
+            custom_where_clause = custom_wheres.get(tabela) if coluna_data == "CUSTOM_WHERE" else None
+            sqlserverCollector(aws, db_name="Tecpel", table_name=tabela, time_column=coluna_data, full_load=force_full_load, custom_where=custom_where_clause)
         except Exception as e:
             logging.error(f"Erro ao extrair Fato Tecpel.{tabela}: {e}")
 
     # 2. Tabelas Dimensão (Carga sempre Full Load, sem precisar de coluna de data)
     dimensoes = [
         "FCFO", 
-        "TPRD"
+        "TPRD",
+        "DALIQINTERESTADUAL",
+        "TVEN",
+        "TVENCOMPL",
+        "GCONSIST",
+        "ZMD_TABPRECO",
+        "ZMD_CATEGORIA",
+        "TPRODUTODEF",
+        "TMARCA",
+        "GFILIAL",
+        "FCFODEF",
+        "TCPG",
+        "FTB3",
+        "TTRA",
+        "TTB1",
+        "TTB2",
+        "TTB3",
+        "TTB4",
+        "TTRBPRD",
+        "TTMV",
+        "TLOC"
     ]
     
     for tabela in dimensoes:
