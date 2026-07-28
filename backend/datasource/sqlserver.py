@@ -59,7 +59,21 @@ class SQLServerCollector:
                 query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -7, GETDATE())"
             
         logger.debug(f"Executando query: {query}")
-        return pd.read_sql(query, con=engine)
+        
+        # Leitura em lotes (chunks) previne erros de Timeout (10054) em tabelas massivas (ex: FLAN, TITMMOV)
+        try:
+            chunks = []
+            for chunk in pd.read_sql(query, con=engine, chunksize=100000):
+                chunks.append(chunk)
+                logger.debug(f"Lote de {len(chunk)} linhas lido do SQL Server...")
+                
+            if not chunks:
+                return pd.DataFrame()
+                
+            return pd.concat(chunks, ignore_index=True)
+        except Exception as e:
+            logger.error(f"Erro crítico durante a extração: {e}")
+            raise
 
     def transform_add_columns(self, df: pd.DataFrame, datasource_value: str) -> pd.DataFrame:
         df["dt_extracao"] = datetime.datetime.now().isoformat()

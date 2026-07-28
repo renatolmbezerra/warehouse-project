@@ -164,8 +164,8 @@ def run_fluig_jobs(force_full_load=False):
 # (Descomente este bloco se quiser rodar na hora para testar)
 if __name__ == "__main__":
     logging.info("Iniciando o agendador. Pressione Ctrl+C para sair.")
-    run_tecpel_jobs(force_full_load=False) # Exemplo: rodar manual a primeira vez
-    run_fluig_jobs(force_full_load=False)  # Exemplo: rodar manual a primeira vez
+    run_tecpel_jobs(force_full_load=True) # Exemplo: rodar manual a primeira vez
+    run_fluig_jobs(force_full_load=True)  # Exemplo: rodar manual a primeira vez
     apiCollector(schema, aws, 50)   # Roda a extração da API manualmente
 
     
