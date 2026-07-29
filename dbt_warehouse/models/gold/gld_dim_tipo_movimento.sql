@@ -26,6 +26,8 @@ CTE_TMOV AS (
                WHEN SUBSTRING(A.NOME, 1, 1) IN ('E', 'S') THEN SUBSTRING(A.NOME, STRPOS(A.NOME, ' - ') + 3, STRPOS(A.NOME, ' | ') - STRPOS(A.NOME, ' - ') - 3)
                ELSE 'N/A'
            END AS COD_CATEGORIA
+         , A.dt_extracao
+         , A.datasource
     FROM {{ ref('slv_tecpel_ttmv') }} A
     JOIN CTE_ULTMOV C
         ON A.CODTMV = C.CODTMV

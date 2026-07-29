@@ -23,6 +23,8 @@ SELECT
     , G.COD_GESTOR
     , G.GESTOR
     , L.CODETD
+    , L.dt_extracao
+    , L.datasource
 FROM {{ ref('slv_tecpel_tloc') }} L
 LEFT JOIN CTE_Gestor G
     ON L.CODLOC = G.CODLOC

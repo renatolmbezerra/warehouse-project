@@ -15,6 +15,8 @@ SELECT
     , MAX(CASE WHEN T.CODTRB = 'COFIMP' THEN T.VALOR                ELSE 0    END) AS COFIMP
     , MAX(CASE WHEN T.CODTRB = 'PIS'    THEN T.VALOR                ELSE 0    END) AS PIS
     , MAX(CASE WHEN T.CODTRB = 'PISIMP' THEN T.VALOR                ELSE 0    END) AS PISIMP
+    , MAX(T.dt_extracao) AS dt_extracao
+    , MAX(T.datasource) AS datasource
 FROM {{ ref('slv_tecpel_ttrbmov') }} T
 WHERE T.CODCOLIGADA = 2
   AND T.CODTRB IN ('IPI','ICMS','ICMSST','COFINS','COFIMP','PIS','PISIMP')

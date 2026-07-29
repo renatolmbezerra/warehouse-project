@@ -37,6 +37,8 @@ SELECT T.CODVEN
      , B.DIASSVENDMAX
      , B.PERFILVENDEDOR AS CODPERFIL
      , P.DESCRICAO AS PERFILVENDEDOR
+     , T.dt_extracao
+     , T.datasource
 FROM {{ ref('slv_tecpel_tven') }} T
 LEFT JOIN {{ ref('slv_tecpel_tvencompl') }} C
     ON T.CODCOLIGADA = C.CODCOLIGADA

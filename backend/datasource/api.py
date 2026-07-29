@@ -76,6 +76,9 @@ class APICollector:
 
     def transformDF(self, response):
         result = pd.DataFrame(response)
+        if not result.empty:
+            result["dt_extracao"] = datetime.datetime.now().isoformat()
+            result["datasource"] = "fakeapi"
         return result
 
     def convertToParquet(self, df):

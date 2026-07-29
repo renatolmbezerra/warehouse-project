@@ -96,6 +96,8 @@ CTE_MovBase AS (
         , B.RATEIOFRETE
         , A.CODTRA
         , C.TIPOFAM
+        , A.dt_extracao
+        , A.datasource
     FROM {{ ref('slv_tecpel_tmov') }} A
     INNER JOIN {{ ref('slv_tecpel_titmmov') }} B
         ON A.CODCOLIGADA = B.CODCOLIGADA
@@ -223,6 +225,8 @@ CTE_Faturamento AS (
               WHEN A.TIPOFAM = 'VISUAL' THEN V.VENDEDORM * A.QUANTIDADE * V.MARGEM_M
               ELSE P.VENDEDORM * A.QUANTIDADE * A.PESOLIQUIDO * P.MARGEM_M
           END AS LUCRO_TABPRECO
+        , A.dt_extracao
+        , A.datasource
     FROM CTE_MovBase A
     INNER JOIN {{ ref('gld_dim_tipo_movimento') }} C
         ON A.CODTMV = C.CODTMV
@@ -359,4 +363,6 @@ SELECT UUID
      , FORMA_PGTO
      , SOLICITACAO_FLUIG
      , SOLICITACAO_PRECO
+     , dt_extracao
+     , datasource
 FROM CTE_Faturamento

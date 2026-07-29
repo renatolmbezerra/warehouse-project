@@ -70,6 +70,8 @@ SELECT A.CODFILIAL || '.' || A.CODLOC AS IDLOC
      , EN.DATA_ULT_ENTRADA
      , SA.DATA_ULT_VENDA
      , DATE_DIFF('day', COALESCE(SA.DATA_ULT_VENDA, EN.DATA_ULT_ENTRADA), CURRENT_DATE) AS DIAS_SEM_VENDA
+     , A.dt_extracao
+     , A.datasource
 FROM {{ ref('slv_tecpel_estoque_saldo_produto_mes') }} A
 LEFT JOIN {{ ref('gld_dim_produto') }} C
     ON A.IDPRD = C.IDPRD

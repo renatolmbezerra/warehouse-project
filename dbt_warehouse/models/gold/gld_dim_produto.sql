@@ -36,6 +36,8 @@ SELECT A.IDPRD            AS IDPRD
      , C.DESCMARCA AS MARCA
      , A.NUMEROCCF AS NCM
      , I.ALIQUOTA AS ALQ_II
+     , A.dt_extracao
+     , A.datasource
 FROM {{ ref('slv_tecpel_tprd') }} A
     LEFT JOIN {{ ref('slv_tecpel_tprodutodef') }} B
         ON A.CODCOLIGADA = B.CODCOLIGADA
