@@ -67,7 +67,7 @@ def run_tecpel_jobs(force_full_load=False):
         "ESTOQUE_SALDO_PRODUTO_MES": "DATA_SALDO"
     }
     
-    # Subqueries customizadas para tabelas filhas que não possuem data própria (baseiam-se na TMOV)
+    # Subqueries customizadas para tabelas filhas que não possuem data própria
     custom_wheres = {
         "TTRBMOV": "EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TTRBMOV.CODCOLIGADA AND TMOV.IDMOV = TTRBMOV.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -7, GETDATE()))",
         "TMOVCOMPL": "EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TMOVCOMPL.CODCOLIGADA AND TMOV.IDMOV = TMOVCOMPL.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -7, GETDATE()))",
@@ -164,8 +164,12 @@ def run_fluig_jobs(force_full_load=False):
 # (Descomente este bloco se quiser rodar na hora para testar)
 if __name__ == "__main__":
     logging.info("Iniciando o agendador. Pressione Ctrl+C para sair.")
-    run_tecpel_jobs(force_full_load=True) # Exemplo: rodar manual a primeira vez
-    run_fluig_jobs(force_full_load=True)  # Exemplo: rodar manual a primeira vez
+    run_tecpel_jobs(force_full_load=False) # Exemplo: rodar manual a primeira vez
+    run_fluig_jobs(force_full_load=False)  # Exemplo: rodar manual a primeira vez
+    
+    # Executar Carga Full apenas da tabela FLAN que deu erro
+    # sqlserverCollector(aws, db_name="Tecpel", table_name="FLAN", time_column="DATACRIACAO", full_load=True)
+    
     apiCollector(schema, aws, 50)   # Roda a extração da API manualmente
 
     

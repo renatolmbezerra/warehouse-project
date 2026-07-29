@@ -76,6 +76,7 @@ class SQLServerCollector:
             raise
 
     def transform_add_columns(self, df: pd.DataFrame, datasource_value: str) -> pd.DataFrame:
+        df = df.copy() # Desfragmenta a memória após o concat e evita o PerformanceWarning
         df["dt_extracao"] = datetime.datetime.now().isoformat()
         df["datasource"] = datasource_value
         return df

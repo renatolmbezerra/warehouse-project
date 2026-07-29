@@ -103,3 +103,8 @@ sources:
   - name: ml001048
     meta:
       external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Fluig/ML001048/*.parquet
+- name: bronze_api
+  tables:
+  - name: compras
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/api/fakeapi/compras/*.parquet
