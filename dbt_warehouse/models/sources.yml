@@ -92,6 +92,21 @@ sources:
   - name: tloc
     meta:
       external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/TLOC/*.parquet
+  - name: ftcf
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/FTCF/*.parquet
+  - name: getd
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/GETD/*.parquet
+  - name: dregiao
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/DREGIAO/*.parquet
+  - name: detdregiao
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/DETDREGIAO/*.parquet
+  - name: clientesab_dtbase
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/bronze/sqlserver/Tecpel/CLIENTESAB_DTBASE/*.parquet
 - name: bronze_fluig
   tables:
   - name: ml001026

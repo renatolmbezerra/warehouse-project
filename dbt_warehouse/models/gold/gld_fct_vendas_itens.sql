@@ -194,7 +194,7 @@ CTE_Faturamento AS (
           END AS CUSTO_TT_POND_SUB
         , N.CUSTO_POND_SUBGRUPO
         , A.VALORFINANCEIRO / NULLIF((A.QUANTIDADE * A.PESOLIQUIDO), 0) AS CUSTO_UNIT
-        , L.UF AS UF_CLIENTE
+        , L.CODETD AS UF_CLIENTE
         , A.CODCPG
         , G.NOME   AS COND_PGTO
         , A.FRETECIFOUFOB AS CODFRETE
@@ -207,7 +207,11 @@ CTE_Faturamento AS (
               WHEN A.FRETECIFOUFOB = 4 THEN 'PROPRIO DESTINARIO'
               ELSE ''
           END AS TIPOFRETE
-        , L.TIPO_CONTRIBUINTE
+        , CASE L.CONTRIBUINTE
+              WHEN 0 THEN 'NÃO CONTRIBUINTE'
+              WHEN 1 THEN 'CONTRIBUINTE'
+              WHEN 2 THEN 'ISENTO'
+          END AS TIPO_CONTRIBUINTE
         , A.CODTB3FLX AS CODFPGTO
         , H.DESCRICAO AS FORMA_PGTO
         , R.SOLICITACAO_FLUIG
@@ -240,7 +244,7 @@ CTE_Faturamento AS (
     LEFT JOIN {{ ref('slv_tecpel_gfilial') }} J
         ON A.CODCOLIGADA = J.CODCOLIGADA
        AND A.CODFILIAL = J.CODFILIAL
-    LEFT JOIN {{ ref('gld_dim_cliente') }} L
+    LEFT JOIN {{ ref('slv_tecpel_fcfo') }} L
         ON A.CODCOLIGADA = L.CODCOLIGADA 
        AND A.CODCFO = L.CODCFO
     LEFT JOIN CTE_Custo_Pond_Subgrupo N
