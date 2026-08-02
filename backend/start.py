@@ -53,6 +53,11 @@ def sqlserverCollector(aws, db_name, table_name, time_column="transaction_time",
 def run_tecpel_jobs(full_load_tables=None):
     """
     Rotina que extrai as tabelas mapeadas do banco 'Tecpel' separando fatos e dimensões.
+    
+    Parâmetro 'full_load_tables':
+    - None (vazio)       -> Carga Incremental em todas as Fatos (Comportamento padrão de produção).
+    - ["ALL"]            -> Força Carga Full em TODAS as tabelas Fato.
+    - ["NOME_DA_TABELA"] -> Força Carga Full apenas na Fato especificada (ex: ["FLAN", "TMOV"]).
     """
     if full_load_tables is None:
         full_load_tables = []
@@ -126,6 +131,11 @@ def run_tecpel_jobs(full_load_tables=None):
 def run_fluig_jobs(full_load_tables=None):
     """
     Rotina que extrai as tabelas mapeadas do banco 'Fluig' separando fatos e dimensões.
+    
+    Parâmetro 'full_load_tables':
+    - None (vazio)       -> Carga Incremental em todas as Fatos (Comportamento padrão de produção).
+    - ["ALL"]            -> Força Carga Full em TODAS as tabelas Fato.
+    - ["NOME_DA_TABELA"] -> Força Carga Full apenas na Fato especificada.
     """
     if full_load_tables is None:
         full_load_tables = []
