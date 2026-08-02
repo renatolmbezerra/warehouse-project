@@ -50,11 +50,14 @@ def sqlserverCollector(aws, db_name, table_name, time_column="transaction_time",
 # Rotinas em Lote (Múltiplas Tabelas)
 # ==========================================
 
-def run_tecpel_jobs(force_full_load=False):
+def run_tecpel_jobs(full_load_tables=None):
     """
     Rotina que extrai as tabelas mapeadas do banco 'Tecpel' separando fatos e dimensões.
     """
-    logging.info(f"Iniciando rotina do banco Tecpel (Force Full Load em Fatos: {force_full_load})")
+    if full_load_tables is None:
+        full_load_tables = []
+        
+    logging.info(f"Iniciando rotina do banco Tecpel (Full Load Tables: {full_load_tables})")
     
     fatos = {      
         "TITMMOV": "DATAEMISSAO",  
@@ -78,7 +81,8 @@ def run_tecpel_jobs(force_full_load=False):
     for tabela, coluna_data in fatos.items():
         try:
             custom_where_clause = custom_wheres.get(tabela) if coluna_data == "CUSTOM_WHERE" else None
-            sqlserverCollector(aws, db_name="Tecpel", table_name=tabela, time_column=coluna_data, full_load=force_full_load, custom_where=custom_where_clause)
+            is_full_load = (tabela in full_load_tables) or ("ALL" in full_load_tables)
+            sqlserverCollector(aws, db_name="Tecpel", table_name=tabela, time_column=coluna_data, full_load=is_full_load, custom_where=custom_where_clause)
         except Exception as e:
             logging.error(f"Erro ao extrair Fato Tecpel.{tabela}: {e}")
 
@@ -119,11 +123,14 @@ def run_tecpel_jobs(force_full_load=False):
             logging.error(f"Erro ao extrair Dimensão Tecpel.{tabela}: {e}")
 
 
-def run_fluig_jobs(force_full_load=False):
+def run_fluig_jobs(full_load_tables=None):
     """
     Rotina que extrai as tabelas mapeadas do banco 'Fluig' separando fatos e dimensões.
     """
-    logging.info(f"Iniciando rotina do banco Fluig (Force Full Load em Fatos: {force_full_load})")
+    if full_load_tables is None:
+        full_load_tables = []
+        
+    logging.info(f"Iniciando rotina do banco Fluig (Full Load Tables: {full_load_tables})")
     
     # 1. Tabelas Fato (Carga Incremental)
     fatos = {
@@ -134,7 +141,8 @@ def run_fluig_jobs(force_full_load=False):
     for tabela, coluna_data in fatos.items():
         try:
             # Fluig usa data no formato DD/MM/YYYY em texto, então passamos o estilo 103
-            sqlserverCollector(aws, db_name="Fluig", table_name=tabela, time_column=coluna_data, full_load=force_full_load, date_format_style=103)
+            is_full_load = (tabela in full_load_tables) or ("ALL" in full_load_tables)
+            sqlserverCollector(aws, db_name="Fluig", table_name=tabela, time_column=coluna_data, full_load=is_full_load, date_format_style=103)
         except Exception as e:
             logging.error(f"Erro ao extrair Fato Fluig.{tabela}: {e}")
 
@@ -169,8 +177,8 @@ def run_fluig_jobs(force_full_load=False):
 # (Descomente este bloco se quiser rodar na hora para testar)
 if __name__ == "__main__":
     logging.info("Iniciando o agendador. Pressione Ctrl+C para sair.")
-    run_tecpel_jobs(force_full_load=True) # Exemplo: rodar manual a primeira vez
-    run_fluig_jobs(force_full_load=True)  # Exemplo: rodar manual a primeira vez
+    run_tecpel_jobs(full_load_tables=["ALL"]) # Exemplo: ["ALL"] para tudo, ou ["FLAN", "TMOV"] para tabelas específicas
+    run_fluig_jobs(full_load_tables=["ALL"])  # Exemplo: rodar manual a primeira vez
     
     # Executar Carga Full apenas da tabela FLAN que deu erro
     # sqlserverCollector(aws, db_name="Tecpel", table_name="FLAN", time_column="DATACRIACAO", full_load=True)

@@ -3,6 +3,7 @@ import pandas as pd
 import pyarrow.parquet as pq
 import datetime
 import logging
+import json
 import os
 from io import BytesIO
 from pydantic import ValidationError
@@ -18,6 +19,15 @@ class APICollector:
 
     def start(self, param):
         response = self.getData(param)
+        
+        if response:
+            # Salva o arquivo Raw no S3 antes de qualquer transformação
+            raw_buffer = BytesIO(json.dumps(response).encode('utf-8'))
+            data_atual = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            raw_file_name = f"raw/api/fakeapi/compras/incremental_{data_atual}.json"
+            logging.info(f"Salvando arquivo Raw: {raw_file_name}")
+            self._aws.upload_file(raw_buffer, raw_file_name)
+
         extracted = self.extractData(response)
 
         # Se não houver dados válidos, aborta para não gerar parquet vazio
@@ -78,7 +88,7 @@ class APICollector:
         result = pd.DataFrame(response)
         if not result.empty:
             result["dt_extracao"] = datetime.datetime.now().isoformat()
-            result["datasource"] = "fakeapi"
+            result["datasource"] = "api-fakeapi"
         return result
 
     def convertToParquet(self, df):

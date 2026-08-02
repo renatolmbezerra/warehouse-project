@@ -29,7 +29,7 @@ class SQLServerCollector:
             return False
 
         logger.info(f"Extração concluída. Linhas processadas: {len(df)}")
-        df = self.transform_add_columns(df, "sqlserver")
+        df = self.transform_add_columns(df, f"sqlserver-{self.db_name.lower()}")
         logger.info("Processo transform com sucesso")
         self.convert_to_delta(df)
 
