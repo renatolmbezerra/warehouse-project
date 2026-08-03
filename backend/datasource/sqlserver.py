@@ -72,7 +72,7 @@ class SQLServerCollector:
                 if self.date_format_style is not None:
                     time_expr = f"TRY_CONVERT(DATETIME, {self.time_column}, {self.date_format_style})"
 
-                query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -7, GETDATE())"
+                query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -2, GETDATE())"
 
         logger.info(f"Executando query: {query}")
 
