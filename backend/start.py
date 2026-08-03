@@ -190,10 +190,8 @@ if __name__ == "__main__":
     run_tecpel_jobs(full_load_tables=[]) # Exemplo: ["ALL"] para tudo, ou ["FLAN", "TMOV"] para tabelas específicas
     run_fluig_jobs(full_load_tables=[])  # Exemplo: rodar manual a primeira vez
     
-    # Executar Carga Full apenas da tabela FLAN que deu erro
-    # sqlserverCollector(aws, db_name="Tecpel", table_name="FLAN", time_column="DATACRIACAO", full_load=True)
     
-    apiCollector(schema, aws, 50)   # Roda a extração da API manualmente
+    apiCollector(schema, aws, 70)   # Roda a extração da API manualmente
 
     
     # while True:
