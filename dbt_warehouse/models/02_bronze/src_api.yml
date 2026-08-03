@@ -1,0 +1,7 @@
+version: 2
+sources:
+- name: bronze_api
+  tables:
+  - name: compras
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/02_bronze/api/fakeapi/compras/*.parquet

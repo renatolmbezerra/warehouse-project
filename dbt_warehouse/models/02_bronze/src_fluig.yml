@@ -1,0 +1,13 @@
+version: 2
+sources:
+- name: bronze_fluig
+  tables:
+  - name: ml001026
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/02_bronze/sqlserver/Fluig/ML001026/*.parquet
+  - name: ml001094
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/02_bronze/sqlserver/Fluig/ML001094/*.parquet
+  - name: ml001048
+    meta:
+      external_location: s3://{{ env_var('S3_BUCKET_NAME') }}/02_bronze/sqlserver/Fluig/ML001048/*.parquet
