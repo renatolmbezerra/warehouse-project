@@ -7,11 +7,22 @@ import datetime
 from io import BytesIO
 from backend.tools.aws.client import S3Client
 
+
 class SQLServerCollector:
-    def __init__(self, aws_client: S3Client, db_name: str, table_name: str, time_column: str = "transaction_time", date_format_style: int = None, custom_where: str = None):
+    def __init__(
+        self,
+        aws_client: S3Client,
+        db_name: str,
+        table_name: str,
+        time_column: str = "transaction_time",
+        date_format_style: int = None,
+        custom_where: str = None,
+    ):
         self.db_name = db_name
         self.table_name = table_name
-        self.time_column = time_column # Coluna usada para filtrar os 7 dias da janela incremental
+        self.time_column = (
+            time_column  # Coluna usada para filtrar os 7 dias da janela incremental
+        )
         self.date_format_style = date_format_style
         self.custom_where = custom_where
         self._buffer = None
@@ -25,10 +36,15 @@ class SQLServerCollector:
         """
         df = self.extract_data(full_load)
         if df.empty:
-            logger.warning(f"Nenhum dado encontrado para {self.db_name}.{self.table_name}")
+            logger.warning(
+                f"Nenhum dado encontrado para {self.db_name}.{self.table_name}"
+            )
             return False
 
-        logger.info(f"Extração concluída. Linhas processadas: {len(df)}")
+        num_chunks = (len(df) + 99999) // 100000
+        logger.info(
+            f"Extração concluída. Linhas processadas: {len(df)} (em {num_chunks} lotes)"
+        )
         df = self.transform_add_columns(df, f"sqlserver-{self.db_name.lower()}")
         logger.info("Processo transform com sucesso")
         self.convert_to_delta(df)
@@ -43,7 +59,7 @@ class SQLServerCollector:
 
     def extract_data(self, full_load: bool) -> pd.DataFrame:
         engine = get_engine(self.db_name)
-        
+
         if full_load:
             # Carga Full: traz a tabela completa
             query = f"SELECT * FROM {self.table_name}"
@@ -55,28 +71,34 @@ class SQLServerCollector:
                 time_expr = self.time_column
                 if self.date_format_style is not None:
                     time_expr = f"TRY_CONVERT(DATETIME, {self.time_column}, {self.date_format_style})"
-                
+
                 query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -7, GETDATE())"
-            
-        logger.debug(f"Executando query: {query}")
-        
+
+        logger.info(f"Executando query: {query}")
+
         # Leitura em lotes (chunks) previne erros de Timeout (10054) em tabelas massivas (ex: FLAN, TITMMOV)
         try:
             chunks = []
             for chunk in pd.read_sql(query, con=engine, chunksize=100000):
                 chunks.append(chunk)
-                logger.debug(f"Lote de {len(chunk)} linhas lido do SQL Server...")
-                
+                logger.debug(
+                    f"Lote de {len(chunk)} linhas lido da tabela {self.table_name}..."
+                )
+
             if not chunks:
                 return pd.DataFrame()
-                
+
             return pd.concat(chunks, ignore_index=True)
         except Exception as e:
             logger.error(f"Erro crítico durante a extração: {e}")
             raise
 
-    def transform_add_columns(self, df: pd.DataFrame, datasource_value: str) -> pd.DataFrame:
-        df = df.copy() # Desfragmenta a memória após o concat e evita o PerformanceWarning
+    def transform_add_columns(
+        self, df: pd.DataFrame, datasource_value: str
+    ) -> pd.DataFrame:
+        df = (
+            df.copy()
+        )  # Desfragmenta a memória após o concat e evita o PerformanceWarning
         df["dt_extracao"] = datetime.datetime.now().isoformat()
         df["datasource"] = datasource_value
         return df
@@ -93,4 +115,4 @@ class SQLServerCollector:
     def generate_file_name(self, full_load: bool) -> str:
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         prefix = "full" if full_load else "incremental"
-        return f"bronze/sqlserver/{self.db_name}/{self.table_name}/{prefix}_{timestamp}.parquet"
+        return f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/{prefix}_{timestamp}.parquet"

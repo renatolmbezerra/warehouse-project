@@ -73,7 +73,8 @@ def run_tecpel_jobs(full_load_tables=None):
         "FLAN": "DATACRIACAO",
         "TRELSLD": "DATAMOVIMENTO",
         "ESTOQUE_SALDO_PRODUTO_MES": "DATA_SALDO",
-        "CLIENTESAB_DTBASE": "DATA_COMPETENCIA"
+        "CLIENTESAB_DTBASE": "DATA_COMPETENCIA",
+        "ZMD_TABPRECO": "RECCREATEDON"
     }
     
     # Subqueries customizadas para tabelas filhas que não possuem data própria
@@ -99,7 +100,6 @@ def run_tecpel_jobs(full_load_tables=None):
         "TVEN",
         "TVENCOMPL",
         "GCONSIST",
-        "ZMD_TABPRECO",
         "ZMD_CATEGORIA",
         "TPRODUTODEF",
         "TMARCA",
@@ -187,8 +187,8 @@ def run_fluig_jobs(full_load_tables=None):
 # (Descomente este bloco se quiser rodar na hora para testar)
 if __name__ == "__main__":
     logging.info("Iniciando o agendador. Pressione Ctrl+C para sair.")
-    run_tecpel_jobs(full_load_tables=["ALL"]) # Exemplo: ["ALL"] para tudo, ou ["FLAN", "TMOV"] para tabelas específicas
-    run_fluig_jobs(full_load_tables=["ALL"])  # Exemplo: rodar manual a primeira vez
+    run_tecpel_jobs(full_load_tables=[]) # Exemplo: ["ALL"] para tudo, ou ["FLAN", "TMOV"] para tabelas específicas
+    run_fluig_jobs(full_load_tables=[])  # Exemplo: rodar manual a primeira vez
     
     # Executar Carga Full apenas da tabela FLAN que deu erro
     # sqlserverCollector(aws, db_name="Tecpel", table_name="FLAN", time_column="DATACRIACAO", full_load=True)

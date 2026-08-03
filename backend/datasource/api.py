@@ -24,7 +24,7 @@ class APICollector:
             # Salva o arquivo Raw no S3 antes de qualquer transformação
             raw_buffer = BytesIO(json.dumps(response).encode('utf-8'))
             data_atual = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            raw_file_name = f"raw/api/fakeapi/compras/incremental_{data_atual}.json"
+            raw_file_name = f"01_raw/api/fakeapi/compras/incremental_{data_atual}.json"
             logging.info(f"Salvando arquivo Raw: {raw_file_name}")
             self._aws.upload_file(raw_buffer, raw_file_name)
 
@@ -103,5 +103,5 @@ class APICollector:
 
     def fileName(self):
         data_atual = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Padronizando com a camada Bronze: bronze/<origem>/<sistema_ou_banco>/<tabela_ou_endpoint>/prefixo_timestamp.parquet
-        return f"bronze/api/fakeapi/compras/incremental_{data_atual}.parquet"
+        # Padronizando com a camada Bronze: 02_bronze/<origem>/<sistema_ou_banco>/<tabela_ou_endpoint>/prefixo_timestamp.parquet
+        return f"02_bronze/api/fakeapi/compras/incremental_{data_atual}.parquet"
