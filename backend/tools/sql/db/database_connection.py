@@ -45,7 +45,7 @@ def get_engine(db_name: str) -> Engine:
         "mssql+pyodbc://",
         creator=lambda: pyodbc.connect(conn_str),
         pool_pre_ping=True,
-        use_insertmanyvalues=True # Otimização nativa do SQLAlchemy 2.0 (muito mais segura que o fast_executemany do pyodbc)
+        fast_executemany=True # Otimização extrema para Bulk Inserts em Pandas
     )
     
     _engines[db_name] = engine

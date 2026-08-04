@@ -21,7 +21,7 @@ class SQLServerCollector:
         self.db_name = db_name
         self.table_name = table_name
         self.time_column = (
-            time_column  # Coluna usada para filtrar os 7 dias da janela incremental
+            time_column  # Coluna usada para filtrar os 3 dias da janela incremental
         )
         self.date_format_style = date_format_style
         self.custom_where = custom_where
@@ -32,7 +32,7 @@ class SQLServerCollector:
         """
         Inicia o processo de extração.
         Se full_load=True, traz a tabela inteira.
-        Se full_load=False (padrão), traz a janela incremental de 7 dias.
+        Se full_load=False (padrão), traz a janela incremental de 3 dias.
         """
         df = self.extract_data(full_load)
         if df.empty:
@@ -64,7 +64,7 @@ class SQLServerCollector:
             # Carga Full: traz a tabela completa
             query = f"SELECT * FROM {self.table_name}"
         else:
-            # Carga Incremental: janela de 7 dias usando SQL Server syntax ou custom_where
+            # Carga Incremental: janela de 3 dias usando SQL Server syntax ou custom_where
             if self.custom_where:
                 query = f"SELECT * FROM {self.table_name} WHERE {self.custom_where}"
             else:
@@ -72,7 +72,7 @@ class SQLServerCollector:
                 if self.date_format_style is not None:
                     time_expr = f"TRY_CONVERT(DATETIME, {self.time_column}, {self.date_format_style})"
 
-                query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -2, GETDATE())"
+                query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -3, GETDATE())"
 
         logger.info(f"Executando query: {query}")
 
@@ -113,6 +113,8 @@ class SQLServerCollector:
             self._buffer = None
 
     def generate_file_name(self, full_load: bool) -> str:
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        prefix = "full" if full_load else "incremental"
-        return f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/{prefix}_{timestamp}.parquet"
+        if full_load:
+            return f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/full.parquet"
+        else:
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            return f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/incremental_{timestamp}.parquet"

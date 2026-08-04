@@ -61,23 +61,12 @@ def load_gold_to_sqlserver():
             logger.info(f"[{table_name}] DataFrame carregado com {len(df)} linhas e {len(df.columns)} colunas.")
             
             # 5. Inserir os dados na tabela
-            logger.info(f"[{table_name}] Iniciando inserção na tabela em lotes controlados...")
+            logger.info(f"[{table_name}] Iniciando inserção de alta performance (Bulk Insert)...")
             
-            # Criar a tabela vazia ou substituir a antiga enviando 0 linhas
-            df.head(0).to_sql(table_name, con=engine, if_exists='replace', index=False)
+            # Grava o dataframe todo usando o motor binário do pyodbc, quebrando apenas a cada 100 mil registros para evitar timeout
+            df.to_sql(table_name, con=engine, if_exists='replace', index=False, chunksize=100000)
             
-            # Inserir os dados aos poucos
-            chunk_size = 2000
-            total_chunks = (len(df) // chunk_size) + 1
-            
-            for i in range(total_chunks):
-                start_idx = i * chunk_size
-                end_idx = min((i + 1) * chunk_size, len(df))
-                chunk_df = df.iloc[start_idx:end_idx]
-                
-                if not chunk_df.empty:
-                    chunk_df.to_sql(table_name, con=engine, if_exists='append', index=False)
-                    logger.info(f"[{table_name}] Lote {i+1}/{total_chunks} inserido ({(end_idx/len(df))*100:.1f}%)")
+            logger.info(f"[{table_name}] Inserção concluída com sucesso!")
                     
         logger.info("Carga de todas as tabelas Gold concluída com sucesso!")
         
