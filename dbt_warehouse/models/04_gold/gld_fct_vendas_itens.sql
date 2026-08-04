@@ -234,7 +234,10 @@ CTE_Faturamento AS (
     FROM CTE_MovBase A
     INNER JOIN {{ ref('gld_dim_tipo_movimento') }} C
         ON A.CODTMV = C.CODTMV
-        AND C.CATEGORIA IN ('Faturamento', 'Devolução')
+        AND (
+            C.CATEGORIA = 'Faturamento' 
+            OR (C.CATEGORIA = 'Devolução' AND C.NATUREZA = 'ENTRADA')
+        )
     LEFT JOIN {{ ref('gld_fct_impostos_item') }} TR
         ON A.CODCOLIGADA = TR.CODCOLIGADA
        AND A.IDMOV       = TR.IDMOV
@@ -296,6 +299,7 @@ SELECT UUID
      , CODCOLIGADA
      , CODFILIAL
      , FILIAL
+     , NSEQITMMOV
      , UNID_VENDA
      , IDLOC
      , CODLOC

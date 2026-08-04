@@ -113,8 +113,9 @@ class SQLServerCollector:
             self._buffer = None
 
     def generate_file_name(self, full_load: bool) -> str:
+        table = self.table_name.lower()
         if full_load:
-            return f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/full.parquet"
+            return f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/{table}_full.parquet"
         else:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            return f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/incremental_{timestamp}.parquet"
+            return f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/{table}_incremental_{timestamp}.parquet"

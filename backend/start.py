@@ -187,11 +187,11 @@ def run_fluig_jobs(full_load_tables=None):
 # (Descomente este bloco se quiser rodar na hora para testar)
 if __name__ == "__main__":
     logging.info("Iniciando o agendador. Pressione Ctrl+C para sair.")
-    run_tecpel_jobs(full_load_tables=[]) # Exemplo: ["ALL"] para tudo, ou ["FLAN", "TMOV"] para tabelas específicas
-    run_fluig_jobs(full_load_tables=[])  # Exemplo: rodar manual a primeira vez
+    run_tecpel_jobs(full_load_tables=["TITMMOV"]) # Exemplo: ["ALL"] para tudo, ou ["FLAN", "TMOV"] para tabelas específicas
+   # run_fluig_jobs(full_load_tables=[])  # Exemplo: rodar manual a primeira vez
     
     
-    apiCollector(schema, aws, 70)   # Roda a extração da API manualmente
+    #apiCollector(schema, aws, 70)   # Roda a extração da API manualmente
 
     
     # while True:
