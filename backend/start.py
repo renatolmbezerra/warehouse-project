@@ -9,13 +9,16 @@ import schedule
 import logging
 
 # Configuração básica de logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 # Carrega as variáveis do arquivo .env para o sistema
 load_dotenv(override=True)
 
 schema = CompraSchema
 aws = S3Client()
+
 
 def apiCollector(schema, aws, repeat):
     response = APICollector(schema, aws).start(repeat)
@@ -28,32 +31,46 @@ def apiCollector(schema, aws, repeat):
     return response
 
 
-def sqlserverCollector(aws, db_name, table_name, time_column="transaction_time", full_load=False, date_format_style=None, custom_where=None):
+def sqlserverCollector(
+    aws,
+    db_name,
+    table_name,
+    time_column="transaction_time",
+    full_load=False,
+    date_format_style=None,
+    custom_where=None,
+):
     # Repassando todos os parâmetros para a classe SQLServerCollector
     response = SQLServerCollector(
-        aws_client=aws, 
-        db_name=db_name, 
-        table_name=table_name, 
+        aws_client=aws,
+        db_name=db_name,
+        table_name=table_name,
         time_column=time_column,
         date_format_style=date_format_style,
-        custom_where=custom_where
+        custom_where=custom_where,
     ).start(full_load=full_load)
 
     if response:
-        logging.info(f"Executei com sucesso (SQL Server - {db_name}.{table_name}): Arquivo salvo no S3.")
+        logging.info(
+            f"Executei com sucesso (SQL Server - {db_name}.{table_name}): Arquivo salvo no S3."
+        )
     else:
-        logging.info(f"Executei (SQL Server - {db_name}.{table_name}), mas nenhum dado foi salvo.")
+        logging.info(
+            f"Executei (SQL Server - {db_name}.{table_name}), mas nenhum dado foi salvo."
+        )
 
     return response
+
 
 # ==========================================
 # Rotinas em Lote (Múltiplas Tabelas)
 # ==========================================
 
+
 def run_tecpel_jobs(full_load_tables=None):
     """
     Rotina que extrai as tabelas mapeadas do banco 'Tecpel' separando fatos e dimensões.
-    
+
     Parâmetro 'full_load_tables':
     - None (vazio)       -> Carga Incremental em todas as Fatos (Comportamento padrão de produção).
     - ["ALL"]            -> Força Carga Full em TODAS as tabelas Fato.
@@ -61,11 +78,13 @@ def run_tecpel_jobs(full_load_tables=None):
     """
     if full_load_tables is None:
         full_load_tables = []
-        
-    logging.info(f"Iniciando rotina do banco Tecpel (Full Load Tables: {full_load_tables})")
-    
-    fatos = {      
-        "TITMMOV": "DATAEMISSAO",  
+
+    logging.info(
+        f"Iniciando rotina do banco Tecpel (Full Load Tables: {full_load_tables})"
+    )
+
+    fatos = {
+        "TITMMOV": "DATAEMISSAO",
         "TMOV": "DATASAIDA",
         "TTRBMOV": "CUSTOM_WHERE",
         "TMOVCOMPL": "CUSTOM_WHERE",
@@ -74,27 +93,36 @@ def run_tecpel_jobs(full_load_tables=None):
         "TRELSLD": "DATAMOVIMENTO",
         "ESTOQUE_SALDO_PRODUTO_MES": "DATA_SALDO",
         "CLIENTESAB_DTBASE": "DATA_COMPETENCIA",
-        "ZMD_TABPRECO": "RECCREATEDON"
+        "ZMD_TABPRECO": "RECCREATEDON",
     }
-    
+
     # Subqueries customizadas para tabelas filhas que não possuem data própria
     custom_wheres = {
         "TTRBMOV": "EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TTRBMOV.CODCOLIGADA AND TMOV.IDMOV = TTRBMOV.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -3, GETDATE()))",
         "TMOVCOMPL": "EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TMOVCOMPL.CODCOLIGADA AND TMOV.IDMOV = TMOVCOMPL.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -3, GETDATE()))",
-        "TITMMOVCOMPL": "EXISTS (SELECT 1 FROM TITMMOV WHERE TITMMOV.CODCOLIGADA = TITMMOVCOMPL.CODCOLIGADA AND TITMMOV.IDMOV = TITMMOVCOMPL.IDMOV AND TITMMOV.NSEQITMMOV = TITMMOVCOMPL.NSEQITMMOV AND TITMMOV.DATAEMISSAO >= DATEADD(day, -3, GETDATE()))"
+        "TITMMOVCOMPL": "EXISTS (SELECT 1 FROM TITMMOV WHERE TITMMOV.CODCOLIGADA = TITMMOVCOMPL.CODCOLIGADA AND TITMMOV.IDMOV = TITMMOVCOMPL.IDMOV AND TITMMOV.NSEQITMMOV = TITMMOVCOMPL.NSEQITMMOV AND TITMMOV.DATAEMISSAO >= DATEADD(day, -3, GETDATE()))",
     }
-    
+
     for tabela, coluna_data in fatos.items():
         try:
-            custom_where_clause = custom_wheres.get(tabela) if coluna_data == "CUSTOM_WHERE" else None
+            custom_where_clause = (
+                custom_wheres.get(tabela) if coluna_data == "CUSTOM_WHERE" else None
+            )
             is_full_load = (tabela in full_load_tables) or ("ALL" in full_load_tables)
-            sqlserverCollector(aws, db_name="Tecpel", table_name=tabela, time_column=coluna_data, full_load=is_full_load, custom_where=custom_where_clause)
+            sqlserverCollector(
+                aws,
+                db_name="Tecpel",
+                table_name=tabela,
+                time_column=coluna_data,
+                full_load=is_full_load,
+                custom_where=custom_where_clause,
+            )
         except Exception as e:
             logging.error(f"Erro ao extrair Fato Tecpel.{tabela}: {e}")
 
     # 2. Tabelas Dimensão (Carga sempre Full Load, sem precisar de coluna de data)
     dimensoes = [
-        "FCFO", 
+        "FCFO",
         "TPRD",
         "DALIQINTERESTADUAL",
         "TVEN",
@@ -118,12 +146,18 @@ def run_tecpel_jobs(full_load_tables=None):
         "FTCF",
         "GETD",
         "DREGIAO",
-        "DETDREGIAO"
+        "DETDREGIAO",
     ]
-    
+
     for tabela in dimensoes:
         try:
-            sqlserverCollector(aws, db_name="Tecpel", table_name=tabela, time_column=None, full_load=True)
+            sqlserverCollector(
+                aws,
+                db_name="Tecpel",
+                table_name=tabela,
+                time_column=None,
+                full_load=True,
+            )
         except Exception as e:
             logging.error(f"Erro ao extrair Dimensão Tecpel.{tabela}: {e}")
 
@@ -131,7 +165,7 @@ def run_tecpel_jobs(full_load_tables=None):
 def run_fluig_jobs(full_load_tables=None):
     """
     Rotina que extrai as tabelas mapeadas do banco 'Fluig' separando fatos e dimensões.
-    
+
     Parâmetro 'full_load_tables':
     - None (vazio)       -> Carga Incremental em todas as Fatos (Comportamento padrão de produção).
     - ["ALL"]            -> Força Carga Full em TODAS as tabelas Fato.
@@ -139,31 +173,41 @@ def run_fluig_jobs(full_load_tables=None):
     """
     if full_load_tables is None:
         full_load_tables = []
-        
-    logging.info(f"Iniciando rotina do banco Fluig (Full Load Tables: {full_load_tables})")
-    
+
+    logging.info(
+        f"Iniciando rotina do banco Fluig (Full Load Tables: {full_load_tables})"
+    )
+
     # 1. Tabelas Fato (Carga Incremental)
-    fatos = {
-        "ML001026": "dataEmissao",   
-        "ML001094": "dataemissao"    
-    }
-    
+    fatos = {"ML001026": "dataEmissao", "ML001094": "dataemissao"}
+
     for tabela, coluna_data in fatos.items():
         try:
             # Fluig usa data no formato DD/MM/YYYY em texto, então passamos o estilo 103
             is_full_load = (tabela in full_load_tables) or ("ALL" in full_load_tables)
-            sqlserverCollector(aws, db_name="Fluig", table_name=tabela, time_column=coluna_data, full_load=is_full_load, date_format_style=103)
+            sqlserverCollector(
+                aws,
+                db_name="Fluig",
+                table_name=tabela,
+                time_column=coluna_data,
+                full_load=is_full_load,
+                date_format_style=103,
+            )
         except Exception as e:
             logging.error(f"Erro ao extrair Fato Fluig.{tabela}: {e}")
 
     # 2. Tabelas Dimensão (Sempre Full Load)
-    dimensoes = [
-        "ML001048"
-    ]
-    
+    dimensoes = ["ML001048"]
+
     for tabela in dimensoes:
         try:
-            sqlserverCollector(aws, db_name="Fluig", table_name=tabela, time_column=None, full_load=True)
+            sqlserverCollector(
+                aws,
+                db_name="Fluig",
+                table_name=tabela,
+                time_column=None,
+                full_load=True,
+            )
         except Exception as e:
             logging.error(f"Erro ao extrair Dimensão Fluig.{tabela}: {e}")
 
@@ -187,13 +231,13 @@ def run_fluig_jobs(full_load_tables=None):
 # (Descomente este bloco se quiser rodar na hora para testar)
 if __name__ == "__main__":
     logging.info("Iniciando o agendador. Pressione Ctrl+C para sair.")
-    run_tecpel_jobs(full_load_tables=["TITMMOV"]) # Exemplo: ["ALL"] para tudo, ou ["FLAN", "TMOV"] para tabelas específicas
-   # run_fluig_jobs(full_load_tables=[])  # Exemplo: rodar manual a primeira vez
-    
-    
-    #apiCollector(schema, aws, 70)   # Roda a extração da API manualmente
+    run_tecpel_jobs(
+        full_load_tables=[]
+    )  # Exemplo: ["ALL"] para tudo, ou ["FLAN", "TMOV"] para tabelas específicas
+    run_fluig_jobs(full_load_tables=[])  # Exemplo: rodar manual a primeira vez
 
-    
+    apiCollector(schema, aws, 70)  # Roda a extração da API manualmente
+
     # while True:
     #     schedule.run_pending()
     #     time.sleep(1)

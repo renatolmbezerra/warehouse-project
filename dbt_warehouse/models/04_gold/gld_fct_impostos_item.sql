@@ -2,6 +2,12 @@
     location="s3://" ~ env_var('S3_BUCKET_NAME') ~ "/04_gold/sqlserver/Tecpel/gld_fct_impostos_item.parquet"
 ) }}
 
+WITH CTE_Datas AS (
+    SELECT 
+        MAKE_DATE(YEAR(CURRENT_DATE) - 5, 1, 1) AS dtInicial,
+        CURRENT_DATE AS dtFinal
+)
+
 SELECT
       T.CODCOLIGADA
     , T.IDMOV
@@ -18,6 +24,12 @@ SELECT
     , MAX(T.dt_extracao) AS dt_extracao
     , MAX(T.datasource) AS datasource
 FROM {{ ref('slv_tecpel_ttrbmov') }} T
+INNER JOIN {{ ref('slv_tecpel_tmov') }} M
+    ON  M.IDMOV       = T.IDMOV
+    AND M.CODCOLIGADA = T.CODCOLIGADA
+    AND M.STATUS      <> 'C'
+    AND M.VALORLIQUIDO <> 0
+    AND M.DATASAIDA BETWEEN (SELECT dtInicial FROM CTE_Datas) AND (SELECT dtFinal FROM CTE_Datas)
 WHERE T.CODCOLIGADA = 2
   AND T.CODTRB IN ('IPI','ICMS','ICMSST','COFINS','COFIMP','PIS','PISIMP')
 GROUP BY T.CODCOLIGADA, T.IDMOV, T.NSEQITMMOV

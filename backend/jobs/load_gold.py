@@ -60,13 +60,36 @@ def load_gold_to_sqlserver():
             df = pd.read_parquet(io.BytesIO(file_obj['Body'].read()))
             logger.info(f"[{table_name}] DataFrame carregado com {len(df)} linhas e {len(df.columns)} colunas.")
             
+            # --- Tratamento de Segurança PyODBC ---
+            # Previne o erro f405 do Bulk Insert (fast_executemany) que quebra com Decimals e NaNs
+            import decimal
+            import numpy as np
+            for col in df.columns:
+                if df[col].dtype == 'object':
+                    sample = df[col].dropna().head(1)
+                    if len(sample) > 0 and isinstance(sample.iloc[0], decimal.Decimal):
+                        df[col] = df[col].astype('float64')
+                    else:
+                        df[col] = df[col].replace({np.nan: None})
+            # ----------------------------------------
+            
             # 5. Inserir os dados na tabela
             logger.info(f"[{table_name}] Iniciando inserção de alta performance (Bulk Insert)...")
             
             # Grava o dataframe todo usando o motor binário do pyodbc, quebrando apenas a cada 100 mil registros para evitar timeout
             df.to_sql(table_name, con=engine, if_exists='replace', index=False, chunksize=100000)
-            
             logger.info(f"[{table_name}] Inserção concluída com sucesso!")
+            
+            # 6. Criar Índice Columnstore para Alta Performance Analítica (OLAP)
+            from sqlalchemy import text
+            with engine.connect() as conn:
+                try:
+                    logger.info(f"[{table_name}] Criando Clustered Columnstore Index...")
+                    conn.execute(text(f"CREATE CLUSTERED COLUMNSTORE INDEX CCI_{table_name} ON {table_name}"))
+                    conn.commit()
+                    logger.info(f"[{table_name}] Índice Columnstore criado com sucesso!")
+                except Exception as idx_err:
+                    logger.warning(f"[{table_name}] Aviso: Não foi possível criar o índice Columnstore: {idx_err}")
                     
         logger.info("Carga de todas as tabelas Gold concluída com sucesso!")
         
