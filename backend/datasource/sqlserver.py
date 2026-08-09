@@ -47,15 +47,13 @@ class SQLServerCollector:
         )
         df = self.transform_add_columns(df, f"sqlserver-{self.db_name.lower()}")
         logger.info("Processo transform com sucesso")
-        self.convert_to_delta(df)
-
-        if self._buffer is not None:
-            file_name = self.generate_file_name(full_load)
-            logger.info(f"Enviando para S3: {file_name}")
-            self._aws.upload_file(self._buffer, file_name)
+        
+        try:
+            self.write_to_s3_parquet(df, full_load)
             return True
-
-        return False
+        except Exception as e:
+            logger.error(f"Erro ao escrever arquivo Parquet: {e}")
+            return False
 
     def extract_data(self, full_load: bool) -> pd.DataFrame:
         engine = get_engine(self.db_name)
@@ -103,19 +101,16 @@ class SQLServerCollector:
         df["datasource"] = datasource_value
         return df
 
-    def convert_to_delta(self, df: pd.DataFrame):
-        try:
-            # Converte o DataFrame do pandas para formato Parquet e joga no buffer
-            self._buffer = BytesIO()
-            df.to_parquet(self._buffer, index=False)
-        except Exception as e:
-            logger.exception("Erro ao converter DataFrame para Parquet")
-            self._buffer = None
-
-    def generate_file_name(self, full_load: bool) -> str:
-        table = self.table_name.lower()
-        if full_load:
-            return f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/{table}_full.parquet"
-        else:
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            return f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/{table}_incremental_{timestamp}.parquet"
+    def write_to_s3_parquet(self, df: pd.DataFrame, full_load: bool):
+        import datetime
+        from io import BytesIO
+        
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        suffix = "full" if full_load else "incremental"
+        s3_path = f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/{self.table_name}_{suffix}_{timestamp}.parquet"
+        
+        logger.info(f"Escrevendo no formato Parquet (Append-Only) em {s3_path}")
+        
+        buffer = BytesIO()
+        df.to_parquet(buffer, index=False)
+        self._aws.upload_file(buffer, s3_path)

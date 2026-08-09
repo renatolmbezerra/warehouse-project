@@ -36,15 +36,13 @@ class APICollector:
             return False
         
         df = self.transformDF(extracted)
-        parquet_buffer = self.convertToParquet(df)
-
-        if parquet_buffer is not None:
-            file_name = self.fileName()
-            logging.info(f"Salvando arquivo: {file_name}")
-            self._aws.upload_file(parquet_buffer, file_name)
+        
+        try:
+            self.write_to_s3_parquet(df)
             return True
-
-        return False
+        except Exception as e:
+            logging.error(f"Erro ao escrever arquivo Parquet: {e}")
+            return False
 
     def getData(self, param):
         base_url = os.environ.get("API_BASE_URL", "http://127.0.0.1:8000")
@@ -91,17 +89,16 @@ class APICollector:
             result["datasource"] = "api-fakeapi"
         return result
 
-    def convertToParquet(self, df):
-        self._buffer = BytesIO()
-        try:
-            df.to_parquet(self._buffer)
-            self._buffer.seek(0) # Retorna o ponteiro do buffer para o início
-            return self._buffer
-        except Exception as e:
-            logging.error(f"Erro ao transformar o DF em parquet: {e} ")
-            return None
-
-    def fileName(self):
-        data_atual = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Padronizando com a camada Bronze: 02_bronze/<origem>/<sistema_ou_banco>/<tabela_ou_endpoint>/prefixo_timestamp.parquet
-        return f"02_bronze/api/fakeapi/compras/incremental_{data_atual}.parquet"
+    def write_to_s3_parquet(self, df):
+        import os
+        import datetime
+        from io import BytesIO
+        
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        s3_path = f"02_bronze/api/fakeapi/compras/compras_{timestamp}.parquet"
+        
+        logging.info(f"Escrevendo no formato Parquet (Append-Only) em {s3_path}")
+        
+        buffer = BytesIO()
+        df.to_parquet(buffer, index=False)
+        self._aws.upload_file(buffer, s3_path)

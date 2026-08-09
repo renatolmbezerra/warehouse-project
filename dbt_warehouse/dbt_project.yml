@@ -18,8 +18,7 @@ clean-targets:
 models:
   warehouse_dbt:
     03_silver:
-      +materialized: external
-      +format: parquet
+      +materialized: view
     04_gold:
       +materialized: external
       +format: parquet
