@@ -2,7 +2,8 @@
     location="s3://" ~ env_var('S3_BUCKET_NAME') ~ "/04_gold/sqlserver/Tecpel/gld_dim_produto.parquet"
 ) }}
 
-SELECT A.IDPRD            AS IDPRD
+SELECT A.CODCOLIGADA      AS CODCOLIGADA
+     , A.IDPRD            AS IDPRD
      , A.CODIGOREDUZIDO   AS CODPRD
      , A.DESCRICAO        AS PRODUTO
      , A.CODTB1FAT        AS CODFAM

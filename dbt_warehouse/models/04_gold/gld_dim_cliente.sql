@@ -183,6 +183,7 @@ CTE_Maxima_Exposicao AS (
 )
 
 SELECT 
+    A.CODCOLIGADA,
     A.CODCFO,
     A.CGCCFO AS CPFCNPJ,
     A.NOME AS CLIENTE,

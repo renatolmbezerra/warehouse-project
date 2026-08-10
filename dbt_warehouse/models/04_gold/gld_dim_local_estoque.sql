@@ -12,9 +12,9 @@ WITH CTE_Gestor AS (
 )
 
 SELECT
-      L.CODFILIAL
+      L.CODCOLIGADA
+    , L.CODFILIAL
     , L.CODLOC
-    , L.CODFILIAL || '.' || L.CODLOC AS IDLOC
     , L.NOME
     , CASE L.INATIVO
         WHEN 0 THEN 'A'

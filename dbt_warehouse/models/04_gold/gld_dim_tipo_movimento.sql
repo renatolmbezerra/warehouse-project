@@ -15,7 +15,8 @@ WITH CTE_ULTMOV AS (
 ),
 
 CTE_TMOV AS (
-    SELECT A.CODTMV
+    SELECT A.CODCOLIGADA
+         , A.CODTMV
          , A.NOME
          , C.ULT_MOV
          , CASE SUBSTRING(A.NOME, 1, 1)

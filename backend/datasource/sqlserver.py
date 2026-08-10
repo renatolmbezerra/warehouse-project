@@ -47,7 +47,7 @@ class SQLServerCollector:
         )
         df = self.transform_add_columns(df, f"sqlserver-{self.db_name.lower()}")
         logger.info("Processo transform com sucesso")
-        
+
         try:
             self.write_to_s3_parquet(df, full_load)
             return True
@@ -104,13 +104,13 @@ class SQLServerCollector:
     def write_to_s3_parquet(self, df: pd.DataFrame, full_load: bool):
         import datetime
         from io import BytesIO
-        
+
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         suffix = "full" if full_load else "incremental"
         s3_path = f"02_bronze/sqlserver/{self.db_name}/{self.table_name}/{self.table_name}_{suffix}_{timestamp}.parquet"
-        
+
         logger.info(f"Escrevendo no formato Parquet (Append-Only) em {s3_path}")
-        
+
         buffer = BytesIO()
         df.to_parquet(buffer, index=False)
         self._aws.upload_file(buffer, s3_path)

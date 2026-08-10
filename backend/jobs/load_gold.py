@@ -20,16 +20,16 @@ load_dotenv(override=True)
 
 # Dicionário de Chaves Primárias para o MERGE Incremental
 PK_DICT = {
-    'gld_dim_cliente': ['CODCOLCFO', 'CODCFO'],
-    'gld_dim_local_estoque': ['CODFILIAL', 'CODLOC'],
-    'gld_dim_produto': ['IDPRD'],
-    'gld_dim_tipo_movimento': ['CODTMV'],
-    'gld_dim_vendedor': ['CODVEN'],
-    'gld_fct_estoque': ['IDPRD', 'CODLOC', 'CODFILIAL', 'DATA_SALDO'],
+    'gld_dim_cliente': ['CODCOLIGADA', 'CODCFO'],
+    'gld_dim_local_estoque': ['CODCOLIGADA', 'CODFILIAL', 'CODLOC'],
+    'gld_dim_produto': ['CODCOLIGADA', 'IDPRD'],
+    'gld_dim_tipo_movimento': ['CODCOLIGADA', 'CODTMV'],
+    'gld_dim_vendedor': ['CODCOLIGADA', 'CODVEN'],
+    'gld_fct_estoque': ['CODCOLIGADA', 'IDPRD', 'CODLOC', 'CODFILIAL', 'DATA_SALDO'],
     'gld_fct_vendas_itens': ['CODCOLIGADA', 'IDMOV', 'NSEQITMMOV'],
     'gld_fct_prazo_medio': ['CODCOLIGADA', 'IDMOV'],
-    'gld_api_compras': ['id'],
-    'gld_fct_impostos_item': ['CODCOLIGADA', 'IDMOV', 'NSEQITMMOV', 'CODTRB']
+    'gld_api_compras': ['ean', 'loja', 'data_compra'],
+    'gld_fct_impostos_item': ['CODCOLIGADA', 'IDMOV', 'NSEQITMMOV']
 }
 
 def load_gold_to_sqlserver():
@@ -155,7 +155,7 @@ def load_gold_to_sqlserver():
                     
                 logger.info(f"[{table_name}] MERGE concluído com sucesso!")
                     
-        logger.info("Carga de todas as tabelas Gold concluída com sucesso!")
+        logger.info("ETAPA 3 CONCLUÍDA: Carga final no SQL Server (Load Gold) finalizada com sucesso! PIPELINE FINALIZADA!")
         
     except Exception as e:
         logger.exception("Erro durante a carga da camada Gold:")

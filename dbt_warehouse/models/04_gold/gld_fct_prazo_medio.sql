@@ -4,9 +4,9 @@
 
 WITH CTE_Base AS (
     SELECT 
+        A.CODCOLIGADA,
         A.CODFILIAL,
         B.CODLOC,
-        CONCAT(A.CODFILIAL, '.', B.CODLOC) AS IDLOC,
         C.CODVEN,
         A.CODCFO,
         A.IDMOV,
@@ -31,6 +31,7 @@ WITH CTE_Base AS (
         AND CAST(A.DATAEMISSAO AS DATE) >= DATE '2020-01-01'
         AND B.CODTMV != '2.2.38'
     GROUP BY 
+        A.CODCOLIGADA,
         A.CODFILIAL,
         B.CODLOC,
         C.CODVEN,
@@ -42,9 +43,9 @@ WITH CTE_Base AS (
 )
 
 SELECT 
+    CODCOLIGADA,
     CODFILIAL,
     CODLOC,
-    IDLOC,
     CODVEN,
     CODCFO,
     IDMOV,

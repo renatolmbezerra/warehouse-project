@@ -108,7 +108,11 @@ def run_tecpel_jobs(full_load_tables=None):
             custom_where_clause = (
                 custom_wheres.get(tabela) if coluna_data == "CUSTOM_WHERE" else None
             )
-            is_full_load = (tabela in full_load_tables) or ("ALL" in full_load_tables)
+            
+            # Tratamento case-insensitive para a verificação de full load
+            tabelas_full_load_upper = [t.upper() for t in full_load_tables]
+            is_full_load = (tabela.upper() in tabelas_full_load_upper) or ("ALL" in tabelas_full_load_upper)
+            
             sqlserverCollector(
                 aws,
                 db_name="Tecpel",
@@ -236,6 +240,8 @@ if __name__ == "__main__":
     run_fluig_jobs(full_load_tables=[])  # Exemplo: rodar manual a primeira vez
 
     apiCollector(schema, aws, 70)  # Roda a extração da API manualmente
+
+    logging.info("ETAPA 1 CONCLUÍDA: Extração dos dados e carregamento (Load) no S3 finalizados com sucesso!")
 
     # while True:
     #     schedule.run_pending()

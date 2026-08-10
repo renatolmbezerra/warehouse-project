@@ -11,7 +11,7 @@ deduplicated AS (
     SELECT *
     FROM source
     QUALIFY ROW_NUMBER() OVER (
-        PARTITION BY CODFILIAL, CODLOC, IDPRD, DATA_SALDO 
+        PARTITION BY CODCOLIGADA, CODFILIAL, CODLOC, IDPRD, DATA_SALDO 
         ORDER BY dt_extracao DESC
     ) = 1
 )

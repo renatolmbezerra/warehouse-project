@@ -118,7 +118,6 @@ CTE_Faturamento AS (
         , J.ESTADO AS FILIAL
         , A.COD_UNID_VENDA        
         , F.UNIDADE_VEN AS UNID_VENDA
-        , A.CODFILIAL || '.' || A.CODLOC AS IDLOC
         , A.CODLOC
         , A.CODTMV
         , A.NUMEROMOV AS NOTAFISCAL
@@ -301,7 +300,6 @@ SELECT UUID
      , FILIAL
      , NSEQITMMOV
      , UNID_VENDA
-     , IDLOC
      , CODLOC
      , CODTMV
      , CODDEPARTAMENTO
