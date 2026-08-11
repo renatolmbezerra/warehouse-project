@@ -84,7 +84,7 @@ def run_tecpel_jobs(full_load_tables=None):
     )
 
     fatos = {
-        "TITMMOV": "DATAEMISSAO",
+        "TITMMOV": "CUSTOM_WHERE",
         "TMOV": "DATASAIDA",
         "TTRBMOV": "CUSTOM_WHERE",
         "TMOVCOMPL": "CUSTOM_WHERE",
@@ -98,9 +98,10 @@ def run_tecpel_jobs(full_load_tables=None):
 
     # Subqueries customizadas para tabelas filhas que não possuem data própria
     custom_wheres = {
+        "TITMMOV": "EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TITMMOV.CODCOLIGADA AND TMOV.IDMOV = TITMMOV.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -3, GETDATE()))",
         "TTRBMOV": "EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TTRBMOV.CODCOLIGADA AND TMOV.IDMOV = TTRBMOV.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -3, GETDATE()))",
         "TMOVCOMPL": "EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TMOVCOMPL.CODCOLIGADA AND TMOV.IDMOV = TMOVCOMPL.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -3, GETDATE()))",
-        "TITMMOVCOMPL": "EXISTS (SELECT 1 FROM TITMMOV WHERE TITMMOV.CODCOLIGADA = TITMMOVCOMPL.CODCOLIGADA AND TITMMOV.IDMOV = TITMMOVCOMPL.IDMOV AND TITMMOV.NSEQITMMOV = TITMMOVCOMPL.NSEQITMMOV AND TITMMOV.DATAEMISSAO >= DATEADD(day, -3, GETDATE()))",
+        "TITMMOVCOMPL": "EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TITMMOVCOMPL.CODCOLIGADA AND TMOV.IDMOV = TITMMOVCOMPL.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -3, GETDATE()))",
     }
 
     for tabela, coluna_data in fatos.items():
@@ -183,7 +184,10 @@ def run_fluig_jobs(full_load_tables=None):
     )
 
     # 1. Tabelas Fato (Carga Incremental)
-    fatos = {"ML001026": "dataEmissao", "ML001094": "dataemissao"}
+    fatos = {
+        "ML001026": "dataEmissao",
+        "ML001094": "dataemissao"
+    }
 
     for tabela, coluna_data in fatos.items():
         try:
@@ -239,7 +243,7 @@ if __name__ == "__main__":
     
     run_fluig_jobs(full_load_tables=[])  # Exemplo: rodar manual a primeira vez
 
-    apiCollector(schema, aws, 70)  # Roda a extração da API manualmente
+    apiCollector(schema, aws, 50)  # Roda a extração da API manualmente
 
     logging.info("ETAPA 1 CONCLUÍDA: Extração dos dados e carregamento (Load) no S3 finalizados com sucesso!")
 
