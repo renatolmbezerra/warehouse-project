@@ -17,14 +17,16 @@ class SQLServerCollector:
         time_column: str = "transaction_time",
         date_format_style: int = None,
         custom_where: str = None,
+        window_days: int = 7,
     ):
         self.db_name = db_name
         self.table_name = table_name
         self.time_column = (
-            time_column  # Coluna usada para filtrar os 3 dias da janela incremental
+            time_column  # Coluna usada para filtrar a janela incremental
         )
         self.date_format_style = date_format_style
         self.custom_where = custom_where
+        self.window_days = window_days  # Margem de segurança (fins de semana, feriados, falhas no job)
         self._buffer = None
         self._aws = aws_client
 
@@ -32,7 +34,7 @@ class SQLServerCollector:
         """
         Inicia o processo de extração.
         Se full_load=True, traz a tabela inteira.
-        Se full_load=False (padrão), traz a janela incremental de 3 dias.
+        Se full_load=False (padrão), traz a janela incremental (self.window_days dias).
         """
         df = self.extract_data(full_load)
         if df.empty:
@@ -62,7 +64,7 @@ class SQLServerCollector:
             # Carga Full: traz a tabela completa
             query = f"SELECT * FROM {self.table_name}"
         else:
-            # Carga Incremental: janela de 3 dias usando SQL Server syntax ou custom_where
+            # Carga Incremental: janela de self.window_days dias usando SQL Server syntax ou custom_where
             if self.custom_where:
                 query = f"SELECT * FROM {self.table_name} WHERE {self.custom_where}"
             else:
@@ -70,7 +72,7 @@ class SQLServerCollector:
                 if self.date_format_style is not None:
                     time_expr = f"TRY_CONVERT(DATETIME, {self.time_column}, {self.date_format_style})"
 
-                query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -3, GETDATE())"
+                query = f"SELECT * FROM {self.table_name} WHERE {time_expr} >= DATEADD(day, -{self.window_days}, GETDATE())"
 
         logger.info(f"Executando query: {query}")
 
