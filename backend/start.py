@@ -86,43 +86,30 @@ def run_tecpel_jobs(full_load_tables=None):
     )
 
     fatos = {
-        "TITMMOV": "CUSTOM_WHERE",
-        "TMOV": "DATASAIDA",
-        "TTRBMOV": "CUSTOM_WHERE",
-        "TMOVCOMPL": "CUSTOM_WHERE",
-        "TITMMOVCOMPL": "CUSTOM_WHERE",
-        "FLAN": "DATACRIACAO",
-        "TRELSLD": "DATAMOVIMENTO",
+        "TITMMOV": "RECCREATEDON",
+        "TMOV": "RECCREATEDON",
+        "TTRBMOV": "RECCREATEDON",
+        "TMOVCOMPL": "RECCREATEDON",
+        "TITMMOVCOMPL": "RECCREATEDON",
+        "FLAN": "RECCREATEDON",
+        "TRELSLD": "RECCREATEDON",
         "ESTOQUE_SALDO_PRODUTO_MES": "DATA_SALDO",
         "CLIENTESAB_DTBASE": "DATA_COMPETENCIA",
         "ZMD_TABPRECO": "RECCREATEDON",
     }
 
-    # Subqueries customizadas para tabelas filhas que não possuem data própria
-    custom_wheres = {
-        "TITMMOV": f"EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TITMMOV.CODCOLIGADA AND TMOV.IDMOV = TITMMOV.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -{INCREMENTAL_WINDOW_DAYS}, GETDATE()))",
-        "TTRBMOV": f"EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TTRBMOV.CODCOLIGADA AND TMOV.IDMOV = TTRBMOV.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -{INCREMENTAL_WINDOW_DAYS}, GETDATE()))",
-        "TMOVCOMPL": f"EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TMOVCOMPL.CODCOLIGADA AND TMOV.IDMOV = TMOVCOMPL.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -{INCREMENTAL_WINDOW_DAYS}, GETDATE()))",
-        "TITMMOVCOMPL": f"EXISTS (SELECT 1 FROM TMOV WHERE TMOV.CODCOLIGADA = TITMMOVCOMPL.CODCOLIGADA AND TMOV.IDMOV = TITMMOVCOMPL.IDMOV AND TMOV.DATASAIDA >= DATEADD(day, -{INCREMENTAL_WINDOW_DAYS}, GETDATE()))",
-    }
-
     for tabela, coluna_data in fatos.items():
         try:
-            custom_where_clause = (
-                custom_wheres.get(tabela) if coluna_data == "CUSTOM_WHERE" else None
-            )
-            
             # Tratamento case-insensitive para a verificação de full load
             tabelas_full_load_upper = [t.upper() for t in full_load_tables]
             is_full_load = (tabela.upper() in tabelas_full_load_upper) or ("ALL" in tabelas_full_load_upper)
-            
+
             sqlserverCollector(
                 aws,
                 db_name="Tecpel",
                 table_name=tabela,
                 time_column=coluna_data,
                 full_load=is_full_load,
-                custom_where=custom_where_clause,
             )
         except Exception as e:
             logging.error(f"Erro ao extrair Fato Tecpel.{tabela}: {e}")
